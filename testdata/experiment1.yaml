@@ -25,6 +25,21 @@ spec:
   duration: 
     intervalSeconds: 15
     maxIterations: 10
+  versionInfo:
+    baseline:
+      name: default
+      tags:
+        revision: revision1
+    candidates:
+    - name: canary
+      tags:
+        revision: revision2
+      weightObjRef:
+        apiVersion: serving.kubeflow.org/v1alpha2
+        fieldPath: /spec/canaryTrafficPercent
+        kind: InferenceService
+        name: sklearn-iris
+        namespace: kfserving-test
   metrics: 
     - 
       metricObj: 
@@ -124,6 +139,33 @@ spec:
       finish: finish
       rollback: finish
       start: start
+      actions:
+        start:
+        - library: default
+          task: exec
+          with:
+            cmd: echo
+            args:
+              - "hello-world"
+              - 'hello {{ index . "revision" }} world'
+              - 'hello {{ index . "omg" }} world'
+        - library: default
+          task: exec
+          with:
+            cmd: helm
+            args:
+              - v1
+              - v2
+              - 20
+              - 40.5
+        finish:
+        - library: default
+          task: exec
+          with:
+            cmd: kustomize
+            args:
+              - build
+              - .
     type: Canary
     weights: 
       algorithm: Progressive
@@ -131,6 +173,7 @@ spec:
       maxCandidateWeightIncrement: 10
   target: kfserving-test/sklearn-iris
 status: 
+  recommendedBaseline: default
   completedIterations: 0
   conditions: 
     - 
