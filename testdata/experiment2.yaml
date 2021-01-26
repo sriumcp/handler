@@ -129,6 +129,26 @@ spec:
       finish: finish
       rollback: finish
       start: start
+      actions:
+        start:
+        - library: default
+          task: exec
+          with:
+            cmd: helm
+            args:
+              - v1
+              - v2
+              - v3
+        finish:
+        - library: default
+          task: exec
+          with:
+            cmd: kustomize
+            args:
+              - build
+              - .
+        - library: knative
+          task: init-experiment
     type: Canary
     weights:
       algorithm: Progressive
