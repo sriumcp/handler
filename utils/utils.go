@@ -2,6 +2,7 @@
 package utils
 
 import (
+	iter8utils "github.com/iter8-tools/etc3/util"
 	"github.com/sirupsen/logrus"
 )
 
@@ -25,3 +26,6 @@ func GetLogger() *logrus.Logger {
 	}
 	return log
 }
+
+// CompletePath determines complete path of a file
+var CompletePath func(prefix string, suffix string) string = iter8utils.CompletePath

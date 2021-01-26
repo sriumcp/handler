@@ -23,16 +23,14 @@ const version string = "v0.1.0-pre"
 
 // package variables used for holding flag values
 var action string
+var task int
 var filePath string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "handler",
-	Short: "Handler performs start up and completion tasks within iter8 experiments",
-	Long: `
-iter8 launches jobs at the start and completition of an experiment, and executes the handler logic within the job's containers. 
-
-For example, while starting an experiment, iter8 may populate the (bare) versionInfo section within the experiment resource object. While finishing an experiment, iter8 may rollforward or rollback versions, and may do so by interacting with Git repositories. This handler program provides the default implementation of a task runner which can execute these tasks during experiment start/finish.`,
+	Short: "perform start up and completion tasks in iter8 experiments",
+	Long:  `iter8 launches jobs at the start and completition of an experiment, and executes the handler program within the job's containers.`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -51,7 +49,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.handler.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", ".handler.yaml", "config file (default is $HOME/.handler.yaml)")
 }
 
 // initConfig reads in config file and ENV variables if set.

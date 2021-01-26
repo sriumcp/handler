@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 
 	"github.com/iter8-tools/handler/base"
@@ -22,6 +23,11 @@ type ExecTask struct {
 	With    ExecInputs `json:"with" yaml:"with"`
 }
 
+// LocallyRunnable is true for exec tasks
+func (t *ExecTask) LocallyRunnable() bool {
+	return true
+}
+
 // Run the command.
 func (t *ExecTask) Run(ctx context.Context) error {
 	args := make([]string, len(t.With.Args))
@@ -29,11 +35,18 @@ func (t *ExecTask) Run(ctx context.Context) error {
 		args[i] = fmt.Sprint(t.With.Args[i])
 	}
 	cmd := exec.Command(t.With.Cmd, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	log.Info("Running task: " + cmd.String())
 	if err := cmd.Run(); err != nil {
 		return err
 	}
 	return nil
+}
+
+// LocalRun locally runs the command.
+func (t *ExecTask) LocalRun(ctx context.Context) error {
+	return t.Run(ctx)
 }
 
 // DryRun explains this command.

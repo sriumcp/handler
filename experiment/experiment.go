@@ -15,6 +15,7 @@ import (
 	"github.com/iter8-tools/handler/lib/knative"
 	"github.com/iter8-tools/handler/utils"
 	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var log *logrus.Logger
@@ -86,6 +87,9 @@ func (sm *ActionMap) UnmarshalJSON(data []byte) error {
 							taskBytes, _ := json.MarshalIndent(task, "", "  ")
 							log.Error("cannot unmarshal task: ", string(taskBytes))
 						}
+					} else {
+						log.Error("Cannot make task: ", *taskMeta)
+						return err
 					}
 				}
 			}
@@ -119,12 +123,27 @@ func (b *Builder) FromFile(filePath string) *Builder {
 				b.exp = exp
 				return b
 			}
-		} else {
-			log.Error(err)
 		}
 	}
-	log.Error("cannot extrapolate experiment")
 	b.err = errors.New("cannot extrapolate experiment")
+	return b
+}
+
+// FromCluster method builds an experiment from a k8s cluster.
+func (b *Builder) FromCluster(name string, namespace string, restClient client.Client) *Builder {
+	// get the exp; this is a handler (enhanced) exp -- not just an iter8 exp.
+	exp := &Experiment{}
+	exp.Experiment = *iter8.NewExperiment(name, namespace).Build()
+	if err := restClient.Get(context.Background(), client.ObjectKey{
+		Namespace: namespace,
+		Name:      name,
+	}, exp); err == nil {
+		if err = exp.extrapolate(); err == nil {
+			b.exp = exp
+			return b
+		}
+	}
+	b.err = errors.New("cannot build experiment from cluster")
 	return b
 }
 
@@ -206,7 +225,7 @@ func (e *Experiment) DryRun() {
 		name := keys[j]
 		fmt.Printf("- Action %s performs the following tasks\n", name)
 		action := (*actions)[name]
-		log.Trace("Action ptr: ", action)
+		log.Trace("Action name: ", name)
 		action.DryRun()
 	}
 }
@@ -215,9 +234,47 @@ func (e *Experiment) DryRun() {
 func (a *Action) DryRun() {
 	for i := 0; i < len(*a); i++ {
 		task := (*a)[i]
+		log.Trace("Action: ", *a)
 		log.Trace("Task ptr: ", task)
 		task.DryRun()
 	}
+}
+
+// LocalRun runs the specified action or task locally
+func (e *Experiment) LocalRun(actionName string, task int) error {
+	handlers := e.Spec.Strategy.Handlers
+	if handlers == nil || handlers.Actions == nil {
+		return errors.New("Experiment does not have a handler stanza or actions")
+	}
+	action, err := e.getAction(actionName)
+	if err != nil {
+		return err
+	}
+	ctx := context.WithValue(context.Background(), base.ContextKey("experiment"), e)
+	if task < 0 {
+		return action.LocalRun(ctx)
+	}
+	if task >= 0 && task < len(*action) { // run task
+		return (*action)[task].LocalRun(ctx)
+	}
+	return nil
+}
+
+// LocalRun runs the specified action locally.
+func (a *Action) LocalRun(ctx context.Context) error {
+	var supported = true
+	for i := 0; i < len(*a); i++ {
+		supported = supported && (*a)[i].LocallyRunnable()
+	}
+	if !supported {
+		return errors.New("local run called on action with tasks that are not locally runnable")
+	}
+	for i := 0; i < len(*a); i++ {
+		if err := (*a)[i].LocalRun(ctx); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (e *Experiment) getAction(name string) (*Action, error) {
