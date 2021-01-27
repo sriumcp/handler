@@ -3,22 +3,19 @@ package experiment_test
 import (
 	"testing"
 
-	etc3 "github.com/iter8-tools/etc3/api/v2alpha1"
-	"github.com/sirupsen/logrus"
-	"k8s.io/client-go/rest"
-	"k8s.io/kubectl/pkg/scheme"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
+	"github.com/iter8-tools/handler/experiment"
 	"github.com/iter8-tools/handler/utils"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/sirupsen/logrus"
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 )
 
-var cfg *rest.Config
-var k8sClient client.Client
-var testEnv *envtest.Environment
 var log *logrus.Logger
+var testEnv *envtest.Environment
+var k8sClient client.Client
 
 func TestAPI(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -31,18 +28,21 @@ var _ = BeforeSuite(func(done Done) {
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{}
-
 	var err error
-	cfg, err = testEnv.Start()
+	var restConf *rest.Config
+	// create a "fake" k8s cluster and get client config in restConf
+	restConf, err = testEnv.Start()
+	Expect(restConf).ToNot(BeNil())
 	Expect(err).ToNot(HaveOccurred())
-	Expect(cfg).ToNot(BeNil())
-
-	err = etc3.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
-
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	// Install CRDs into the cluster
+	crdPath := utils.CompletePath("../", "testdata/crd/bases")
+	_, err = envtest.InstallCRDs(restConf, envtest.CRDInstallOptions{Paths: []string{crdPath}})
 	Expect(err).ToNot(HaveOccurred())
+
+	By("initializing k8sclient")
+	k8sClient, err = experiment.GetClient(restConf)
 	Expect(k8sClient).ToNot(BeNil())
+	Expect(err).ToNot(HaveOccurred())
 
 	close(done)
 }, 60)

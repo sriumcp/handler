@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"os"
+
 	"github.com/iter8-tools/handler/experiment"
 	"github.com/spf13/cobra"
 )
@@ -14,8 +16,11 @@ var dryrunCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if exp, err := (&experiment.Builder{}).FromFile(filePath).Build(); err == nil {
 			log.Trace(exp, err)
-			exp.DryRun()
-			return
+			if err = exp.DryRun(); err == nil {
+				return
+			}
+			log.Error("cannot dry run experiment", err)
+			os.Exit(1)
 		}
 		log.Error("cannot build experiment")
 	},

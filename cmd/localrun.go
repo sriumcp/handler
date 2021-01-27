@@ -18,7 +18,7 @@ var localrunCmd = &cobra.Command{
 			if err == nil {
 				return
 			}
-			log.Error(err)
+			log.Error("cannot local run experiment", err)
 		} else {
 			log.Error("cannot build experiment", err)
 		}

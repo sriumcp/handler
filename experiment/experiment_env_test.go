@@ -1,55 +1,47 @@
 package experiment_test
 
 import (
+	"context"
 	"encoding/json"
 
+	"github.com/iter8-tools/etc3/api/v2alpha1"
 	"github.com/iter8-tools/handler/experiment"
 	"github.com/iter8-tools/handler/utils"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 var _ = Describe("Experiment's handler field", func() {
 	Context("when containing handler actions", func() {
 		var exp *experiment.Experiment
 		var err error
-		It("should read experiment", func() {
+		It("should deal with the handler actions properly", func() {
+			By("reading the experiment from file")
 			exp, err = (&experiment.Builder{}).FromFile(utils.CompletePath("../", "testdata/experiment1.yaml")).Build()
-			Expect(err).Should(Succeed())
-		})
+			Expect(err).ToNot(HaveOccurred())
 
-		us := &unstructured.Unstructured{}
-		It("should convert typed experiment into an unstructured one", func() {
+			By("converting the type experiment into an unstructured one")
+			us := &unstructured.Unstructured{}
 			var expBytes []byte
 			expBytes, err = json.Marshal(exp)
 			Expect(json.Unmarshal(expBytes, &us.Object)).To(Succeed())
+
+			By("k8s creating experiment in cluster")
+			us.SetGroupVersionKind(schema.GroupVersionKind{
+				Group:   v2alpha1.GroupVersion.Group,
+				Version: v2alpha1.GroupVersion.Version,
+				Kind:    "Experiment",
+			})
+			Expect(k8sClient.Create(context.Background(), us)).To(Succeed())
+
+			By("fetching experiment from cluster")
+			b := &experiment.Builder{}
+			exp2, err := b.FromCluster("sklearn-iris-experiment-1", "default", k8sClient).Build()
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(exp2.Spec).To(Equal(exp.Spec))
 		})
-
-		// It("should create the experiment", func() {
-		// 	us.SetGroupVersionKind(schema.GroupVersionKind{
-		// 		Group:   v2alpha1.GroupVersion.Group,
-		// 		Version: v2alpha1.GroupVersion.Version,
-		// 		Kind:    "Experiment",
-		// 	})
-		// 	log.Info("unstructured object", "us", us)
-		// 	Expect(k8sClient.Create(context.Background(), us)).To(Succeed())
-		// })
-
-		// exp2 := &unstructured.Unstructured{}
-		// exp2.SetGroupVersionKind(schema.GroupVersionKind{
-		// 	Group:   v2alpha1.GroupVersion.Group,
-		// 	Version: v2alpha1.GroupVersion.Version,
-		// 	Kind:    "Experiment",
-		// })
-		// It("should fetch the experiment with the unknown fields", func() {
-		// 	Expect(k8sClient.Get(context.Background(), types.NamespacedName{
-		// 		Namespace: "default",
-		// 		Name:      "exp"}, exp2)).Should(Succeed())
-		// 	log.Info("fetched", "experiment", exp2)
-		// 	_, found, err := unstructured.NestedFieldCopy(exp2.Object, "spec", "strategy", "handlers", "startTasks")
-		// 	Expect(found).To(BeTrue())
-		// 	Expect(err).To(BeNil())
-		// })
 	})
 })

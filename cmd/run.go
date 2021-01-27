@@ -5,10 +5,11 @@ import (
 	"os"
 
 	"github.com/iter8-tools/handler/experiment"
-	"github.com/iter8-tools/handler/k8sclient"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 // getExperimentNN gets the name and namespace of the experiment from environment variables.
@@ -26,12 +27,16 @@ func getExperimentNN() (name string, namespace string, err error) {
 func run(cmd *cobra.Command, args []string) error {
 	name, namespace, err := getExperimentNN()
 	if err == nil {
-		var restClient client.Client
-		restClient, err = k8sclient.GetInClusterClient()
+		var restConf *rest.Config
+		restConf, err = config.GetConfig()
 		if err == nil {
-			var exp *experiment.Experiment
-			if exp, err = (&experiment.Builder{}).FromCluster(name, namespace, restClient).Build(); err == nil {
-				err = exp.Run(action)
+			var restClient client.Client
+			restClient, err = experiment.GetClient(restConf)
+			if err == nil {
+				var exp *experiment.Experiment
+				if exp, err = (&experiment.Builder{}).FromCluster(name, namespace, restClient).Build(); err == nil {
+					err = exp.Run(action)
+				}
 			}
 		}
 	}
