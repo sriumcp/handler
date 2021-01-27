@@ -13,7 +13,6 @@ RUN go mod download
 COPY base/ base/
 COPY cmd/ cmd/
 COPY experiment/ experiment/
-COPY k8sclient/ k8sclient/
 COPY lib/ lib/
 COPY utils/ utils/
 COPY .handler.yaml .handler.yaml

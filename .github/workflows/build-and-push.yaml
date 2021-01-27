@@ -1,4 +1,4 @@
-name: Build, test and push iter8-kfserving-handler
+name: Build, test and push iter8 handler
 
 on:
   push:

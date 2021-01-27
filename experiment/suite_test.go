@@ -32,8 +32,8 @@ var _ = BeforeSuite(func(done Done) {
 	var restConf *rest.Config
 	// create a "fake" k8s cluster and get client config in restConf
 	restConf, err = testEnv.Start()
-	Expect(restConf).ToNot(BeNil())
 	Expect(err).ToNot(HaveOccurred())
+	Expect(restConf).ToNot(BeNil())
 	// Install CRDs into the cluster
 	crdPath := utils.CompletePath("../", "testdata/crd/bases")
 	_, err = envtest.InstallCRDs(restConf, envtest.CRDInstallOptions{Paths: []string{crdPath}})
