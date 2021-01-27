@@ -1,31 +1,63 @@
 package cmd
 
 import (
-	"fmt"
+	"errors"
+	"os"
 
+	"github.com/iter8-tools/handler/experiment"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
+
+// getExperimentNN gets the name and namespace of the experiment from environment variables.
+// Returns error if unsuccessful.
+func getExperimentNN() (name string, namespace string, err error) {
+	name = viper.GetViper().GetString("experiment_name")
+	namespace = viper.GetViper().GetString("experiment_namespace")
+	if len(name) == 0 || len(namespace) == 0 {
+		return name, namespace, errors.New("invalid experiment name/namespace")
+	}
+	return name, namespace, nil
+}
+
+// run is a helper function used in the definition of runCmd cobra command.
+func run(cmd *cobra.Command, args []string) error {
+	name, namespace, err := getExperimentNN()
+	if err == nil {
+		var restConf *rest.Config
+		restConf, err = config.GetConfig()
+		if err == nil {
+			var restClient client.Client
+			restClient, err = experiment.GetClient(restConf)
+			if err == nil {
+				var exp *experiment.Experiment
+				if exp, err = (&experiment.Builder{}).FromCluster(name, namespace, restClient).Build(); err == nil {
+					err = exp.Run(action)
+				}
+			}
+		}
+	}
+	return err
+}
 
 // runCmd represents the run command
 var runCmd = &cobra.Command{
 	Use:   "run",
-	Short: "Run a specific task list in an experiment.",
-	Long:  `Sequentially execute all the tasks in the specified task list in an experiment. If any of the tasks result in an error, the run command exits immediately.`,
+	Short: "run an action",
+	Long:  `Sequentially execute all tasks in the specified action; if any task run results in an error, exit immediately with error.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("run called")
+		if err := run(cmd, args); err != nil {
+			log.Error(err)
+			os.Exit(1)
+		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(runCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// runCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// runCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	runCmd.PersistentFlags().StringVarP(&action, "action", "a", "", "name of the action")
+	runCmd.MarkPersistentFlagRequired("action")
 }
