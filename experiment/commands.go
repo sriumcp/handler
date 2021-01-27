@@ -24,14 +24,16 @@ func (e *Experiment) extrapolate() (er error) {
 			}
 			for _, action := range *e.Spec.Strategy.Handlers.Actions {
 				for i := 0; i < len(*action); i++ {
-					log.Trace(i, *action, version.Tags)
-					err = (*action)[i].Extrapolate(&base.Tags{M: version.Tags})
+					if err = (*action)[i].Extrapolate(&base.Tags{M: version.Tags}); err != nil {
+						log.Error("cannot extrapolate experiment: ", err)
+						return err
+					}
 				}
 			}
 		}
 	} else {
-		log.Warn("cannot get recommended baseline")
-		return nil
+		log.Error("error while getting recommended baseline")
+		return err
 	}
 	return nil
 }
@@ -190,6 +192,7 @@ func (e *Experiment) Run(name string) error {
 		return err
 	}
 	if err := e.extrapolate(); err != nil {
+		log.Error(err)
 		return err
 	}
 	ctx := context.WithValue(context.Background(), base.ContextKey("experiment"), e)

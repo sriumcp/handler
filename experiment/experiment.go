@@ -77,13 +77,15 @@ func (sm *ActionMap) UnmarshalJSON(data []byte) error {
 					if task, err = makeTask(taskMeta); err == nil {
 						if err = json.Unmarshal(rawTasksForAction[i], task); err == nil {
 							action[i] = task
-							log.Trace("using.. ")
+							log.Trace("using... ")
 						} else {
 							taskBytes, _ := json.MarshalIndent(task, "", "  ")
-							log.Error("cannot unmarshal task: ", string(taskBytes))
+							log.Error("cannot unmarshal task: " + string(taskBytes))
+							log.Error(err)
+							return err
 						}
 					} else {
-						log.Error("Cannot make task: ", *taskMeta)
+						log.Error("cannot make task: ", *taskMeta)
 						return err
 					}
 				}
