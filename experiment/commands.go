@@ -30,9 +30,12 @@ func (e *Experiment) extrapolate() (er error) {
 					}
 				}
 			}
+		} else {
+			log.Error("error getting version detail")
+			return err
 		}
 	} else {
-		log.Error("error while getting recommended baseline")
+		log.Error("error getting recommended baseline")
 		return err
 	}
 	return nil
@@ -83,7 +86,8 @@ func (e *Experiment) DryRun() error {
 		return nil
 	}
 	if err := e.extrapolate(); err != nil {
-		return err
+		log.Warn("extrapolation error; ignoring in dry-run... but this might cause failure in actual runs")
+		log.Warn(err)
 	}
 	fmt.Println("-------------------")
 	fmt.Printf("Experiment has %d actions. ", len(*actions))

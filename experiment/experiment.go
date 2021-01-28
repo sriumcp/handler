@@ -53,9 +53,9 @@ type Action []base.Task
 // UnmarshalJSON builds an ActionMap from a byte slice.
 func (sm *ActionMap) UnmarshalJSON(data []byte) error {
 	actionMapRaw := make(map[string][]json.RawMessage)
+	actions := make(ActionMap)
 	var err error
 	if err = json.Unmarshal(data, &actionMapRaw); err == nil {
-		actions := make(ActionMap)
 		// first create raw actions, then extract TaskMeta from then, and then extract tasks
 		for actionName, rawTasksForAction := range actionMapRaw {
 			action := make(Action, len(rawTasksForAction))
@@ -88,17 +88,19 @@ func (sm *ActionMap) UnmarshalJSON(data []byte) error {
 						log.Error("cannot make task: ", *taskMeta)
 						return err
 					}
+				} else {
+					log.Error(err)
+					return errors.New("cannot unmarshal ActionMap")
 				}
 			}
 		}
-		if err != nil {
-			log.Error("cannot unmarshal ActionMap")
-			return errors.New("cannot unmarshal ActionMap")
-		}
-		*sm = actions
-		return nil
 	}
-	return errors.New("cannot unmarshal ActionMap")
+	if err != nil {
+		log.Error("cannot unmarshal ActionMap")
+		return err
+	}
+	*sm = actions
+	return nil
 }
 
 // Builder helps in construction of an experiment.

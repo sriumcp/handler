@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/iter8-tools/handler/experiment"
+	"github.com/iter8-tools/handler/lib/def"
 	"github.com/iter8-tools/handler/utils"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -28,6 +29,13 @@ var _ = Describe("Experiment's handler field", func() {
 			Expect(exp2.Spec).To(Equal(exp.Spec))
 		})
 
+		It("should handle non-existing experiments properly", func() {
+			By("signaling error")
+			b := &experiment.Builder{}
+			_, err := b.FromCluster("non-existent", "default", k8sClient).Build()
+			Expect(err).To(HaveOccurred())
+		})
+
 		It("should run handler", func() {
 			By("reading the experiment from file")
 			exp, err = (&experiment.Builder{}).FromFile(utils.CompletePath("../", "testdata/experiment6.yaml")).Build()
@@ -46,6 +54,10 @@ var _ = Describe("Experiment's handler field", func() {
 			By("running the experiment")
 			err = exp2.Run("start")
 			Expect(err).NotTo(HaveOccurred())
+			action := (*exp2.Spec.Strategy.Handlers.Actions)["start"]
+			execTask := (*action)[0].(*def.ExecTask)
+			arg := execTask.With.Args[1]
+			Expect("hello revision1 world").To(Equal(arg))
 		})
 
 		It("should deal with extrapolation errors", func() {
@@ -57,6 +69,5 @@ var _ = Describe("Experiment's handler field", func() {
 			err = exp.Run("start")
 			Expect(err).To(HaveOccurred())
 		})
-
 	})
 })

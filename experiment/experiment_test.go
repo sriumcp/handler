@@ -60,6 +60,16 @@ func TestInvalidActions(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestInvalidTaskMeta(t *testing.T) {
+	_, err := (&Builder{}).FromFile(utils.CompletePath("../", "testdata/experiment8.yaml")).Build()
+	assert.Error(t, err)
+}
+
+func TestStringAction(t *testing.T) {
+	_, err := (&Builder{}).FromFile(utils.CompletePath("../", "testdata/experiment9.yaml")).Build()
+	assert.Error(t, err)
+}
+
 func TestMethodsOnNilExperiment(t *testing.T) {
 	var e *Experiment
 	assert.Error(t, e.extrapolate())
@@ -87,6 +97,35 @@ func TestExtrapolateWithoutHandlerStanza(t *testing.T) {
 	e.Spec.Strategy.Handlers = &Handlers{}
 	_, err = e.getAction("start")
 	assert.Error(t, err)
+}
+
+func TestDryRunWithoutHandlerStanza(t *testing.T) {
+	var e *Experiment = &Experiment{}
+	assert.NoError(t, e.DryRun())
+
+	e.Spec.Strategy.Handlers = &Handlers{}
+	assert.NoError(t, e.DryRun())
+}
+
+func TestDryRunWithBadExtrapolation(t *testing.T) {
+	exp, err := (&Builder{}).FromFile(utils.CompletePath("../", "testdata/experiment1.yaml")).Build()
+	assert.NoError(t, err)
+
+	badBaseline := ""
+	exp.Status.RecommendedBaseline = &badBaseline
+	assert.Error(t, exp.extrapolate())
+	assert.NoError(t, exp.DryRun())
+
+	exp.Status.RecommendedBaseline = nil
+	assert.Error(t, exp.extrapolate())
+	assert.NoError(t, exp.DryRun())
+}
+
+func TestExperimentWithNilAction(t *testing.T) {
+	exp, err := (&Builder{}).FromFile(utils.CompletePath("../", "testdata/experiment10.yaml")).Build()
+	assert.NoError(t, err)
+
+	assert.NoError(t, exp.DryRun())
 }
 
 func TestExtrapolateWithoutRecommendedBaseline(t *testing.T) {
