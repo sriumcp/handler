@@ -6,10 +6,15 @@ import (
 	"errors"
 	"html/template"
 
+	"github.com/iter8-tools/handler/utils"
 	"github.com/sirupsen/logrus"
 )
 
 var log *logrus.Logger
+
+func init() {
+	log = utils.GetLogger()
+}
 
 // TaskMeta identifies Library and Name of a task.
 type TaskMeta struct {
@@ -45,10 +50,10 @@ func (tags *Tags) Extrapolate(str *string) (string, error) {
 		if err = templ.Execute(&buf, tags.M); err == nil {
 			return string(buf.Bytes()), nil
 		}
-		log.Error("template execution error", err)
+		log.Error("template execution error: ", err)
 		return "", errors.New("cannot extrapolate string")
 	}
-	log.Error("template creation error", err)
+	log.Error("template creation error: ", err)
 	return "", errors.New("cannot extrapolate string")
 }
 

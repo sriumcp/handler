@@ -23,19 +23,28 @@ func getExperimentNN() (name string, namespace string, err error) {
 	return name, namespace, nil
 }
 
+var getConfig = func() (*rest.Config, error) {
+	return config.GetConfig()
+}
+
 // run is a helper function used in the definition of runCmd cobra command.
 func run(cmd *cobra.Command, args []string) error {
 	name, namespace, err := getExperimentNN()
 	if err == nil {
 		var restConf *rest.Config
-		restConf, err = config.GetConfig()
+		restConf, err = getConfig()
 		if err == nil {
 			var restClient client.Client
 			restClient, err = experiment.GetClient(restConf)
 			if err == nil {
 				var exp *experiment.Experiment
 				if exp, err = (&experiment.Builder{}).FromCluster(name, namespace, restClient).Build(); err == nil {
-					err = exp.Run(action)
+					if _, err = exp.GetAction(action); err == nil {
+						err = exp.Run(action)
+					} else {
+						log.Warn("action '" + action + "' not present in experiment... exiting handler")
+						return nil
+					}
 				}
 			}
 		}

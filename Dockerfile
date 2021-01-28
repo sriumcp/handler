@@ -1,4 +1,4 @@
-# Build the manager binary
+# Build the handler and install helm and kubectl
 FROM golang:1.15 as builder
 
 WORKDIR /workspace
@@ -13,20 +13,35 @@ RUN go mod download
 COPY base/ base/
 COPY cmd/ cmd/
 COPY experiment/ experiment/
-COPY k8sclient/ k8sclient/
 COPY lib/ lib/
 COPY utils/ utils/
 COPY .handler.yaml .handler.yaml
 COPY main.go main.go
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o handler main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o /bin/handler main.go
 
+# Install kubectl
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+RUN chmod 755 kubectl
+RUN cp kubectl /bin
+
+# Install Helm 3
+RUN curl -fsSL -o helm-v3.5.0-linux-amd64.tar.gz https://get.helm.sh/helm-v3.5.0-linux-amd64.tar.gz
+RUN tar -zxvf helm-v3.5.0-linux-amd64.tar.gz
+RUN linux-amd64/helm version
+
+# Use distroless as minimal base image to package the manager binary
+# Refer to https://github.com/GoogleContainerTools/distroless for more details
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
-COPY --from=builder /workspace/handler .
+COPY --from=builder /bin/handler /bin/handler
+COPY --from=builder /bin/sh /bin/sh
+COPY --from=builder /bin/kubectl /bin/kubectl
+COPY --from=builder /workspace/linux-amd64/helm /bin/helm
+
 USER nonroot:nonroot
 
-ENTRYPOINT ["/handler"]
+ENTRYPOINT ["helm", "version"]

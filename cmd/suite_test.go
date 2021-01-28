@@ -1,4 +1,4 @@
-package experiment_test
+package cmd
 
 import (
 	"testing"
@@ -7,13 +7,11 @@ import (
 	"github.com/iter8-tools/handler/utils"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 )
 
-var log *logrus.Logger
 var testEnv *envtest.Environment
 var k8sClient client.Client
 
@@ -29,11 +27,13 @@ var _ = BeforeSuite(func(done Done) {
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{}
 	var err error
-	var restConf *rest.Config
-	// create a "fake" k8s cluster and get client config in restConf
-	restConf, err = testEnv.Start()
+	// create a "fake" k8s cluster and mock the getConfig lambda function
+	restConf, err := testEnv.Start()
 	Expect(err).ToNot(HaveOccurred())
 	Expect(restConf).ToNot(BeNil())
+	getConfig = func() (*rest.Config, error) {
+		return restConf, err
+	}
 	// Install CRDs into the cluster
 	crdPath := utils.CompletePath("../", "testdata/crd/bases")
 	_, err = envtest.InstallCRDs(restConf, envtest.CRDInstallOptions{Paths: []string{crdPath}})

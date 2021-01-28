@@ -44,12 +44,8 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", ".handler.yaml", "config file (default is $HOME/.handler.yaml)")
+	log = utils.GetLogger()
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -81,5 +77,4 @@ func initConfig() {
 	if err == nil {
 		utils.SetLogLevel(ll)
 	}
-	log = utils.GetLogger()
 }

@@ -24,14 +24,19 @@ func (e *Experiment) extrapolate() (er error) {
 			}
 			for _, action := range *e.Spec.Strategy.Handlers.Actions {
 				for i := 0; i < len(*action); i++ {
-					log.Trace(i, *action, version.Tags)
-					err = (*action)[i].Extrapolate(&base.Tags{M: version.Tags})
+					if err = (*action)[i].Extrapolate(&base.Tags{M: version.Tags}); err != nil {
+						log.Error("cannot extrapolate experiment: ", err)
+						return err
+					}
 				}
 			}
+		} else {
+			log.Error("error getting version detail")
+			return err
 		}
 	} else {
-		log.Warn("cannot get recommended baseline")
-		return nil
+		log.Error("error getting recommended baseline")
+		return err
 	}
 	return nil
 }
@@ -81,7 +86,8 @@ func (e *Experiment) DryRun() error {
 		return nil
 	}
 	if err := e.extrapolate(); err != nil {
-		return err
+		log.Warn("extrapolation error; ignoring in dry-run... but this might cause failure in actual runs")
+		log.Warn(err)
 	}
 	fmt.Println("-------------------")
 	fmt.Printf("Experiment has %d actions. ", len(*actions))
@@ -125,7 +131,7 @@ func (e *Experiment) LocalRun(actionName string, task int) error {
 	if handlers == nil || handlers.Actions == nil {
 		return errors.New("Experiment does not have a handler stanza or actions")
 	}
-	action, err := e.getAction(actionName)
+	action, err := e.GetAction(actionName)
 	if err != nil {
 		return err
 	}
@@ -163,10 +169,10 @@ func (a *Action) LocalRun(ctx context.Context) error {
 	return nil
 }
 
-// getAction gets a named action from an experiment.
-func (e *Experiment) getAction(name string) (*Action, error) {
+// GetAction gets a named action from an experiment.
+func (e *Experiment) GetAction(name string) (*Action, error) {
 	if e == nil {
-		return nil, errors.New("getAction(...) called on nil experiment")
+		return nil, errors.New("GetAction(...) called on nil experiment")
 	}
 	if e.Spec.Strategy.Handlers == nil {
 		return nil, errors.New("nil handlers")
@@ -185,11 +191,12 @@ func (e *Experiment) Run(name string) error {
 	if e == nil {
 		return errors.New("Run(...) called on nil experiment")
 	}
-	action, err := e.getAction(name)
+	action, err := e.GetAction(name)
 	if err != nil {
 		return err
 	}
 	if err := e.extrapolate(); err != nil {
+		log.Error(err)
 		return err
 	}
 	ctx := context.WithValue(context.Background(), base.ContextKey("experiment"), e)
