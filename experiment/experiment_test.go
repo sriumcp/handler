@@ -81,7 +81,7 @@ func TestMethodsOnNilExperiment(t *testing.T) {
 	assert.Error(t, err)
 	err = e.LocalRun("start", 0)
 	assert.Error(t, err)
-	_, err = e.getAction("start")
+	_, err = e.GetAction("start")
 	assert.Error(t, err)
 	err = e.Run("start")
 	assert.Error(t, err)
@@ -91,11 +91,11 @@ func TestExtrapolateWithoutHandlerStanza(t *testing.T) {
 	var e *Experiment = &Experiment{}
 	assert.NoError(t, e.extrapolate())
 
-	_, err := e.getAction("start")
+	_, err := e.GetAction("start")
 	assert.Error(t, err)
 
 	e.Spec.Strategy.Handlers = &Handlers{}
-	_, err = e.getAction("start")
+	_, err = e.GetAction("start")
 	assert.Error(t, err)
 }
 

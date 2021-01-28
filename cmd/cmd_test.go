@@ -38,14 +38,11 @@ func TestLocalRun5(t *testing.T) {
 	localrunCmd.Run(nil, nil)
 	task = 1
 	localrunCmd.Run(nil, nil)
+	action = ""
 }
 
 func TestVersion(t *testing.T) {
 	versionCmd.Run(nil, nil)
-}
-
-func TestExecute(t *testing.T) {
-	Execute()
 }
 
 func TestInitConfig(t *testing.T) {

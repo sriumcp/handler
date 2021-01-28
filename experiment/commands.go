@@ -131,7 +131,7 @@ func (e *Experiment) LocalRun(actionName string, task int) error {
 	if handlers == nil || handlers.Actions == nil {
 		return errors.New("Experiment does not have a handler stanza or actions")
 	}
-	action, err := e.getAction(actionName)
+	action, err := e.GetAction(actionName)
 	if err != nil {
 		return err
 	}
@@ -169,10 +169,10 @@ func (a *Action) LocalRun(ctx context.Context) error {
 	return nil
 }
 
-// getAction gets a named action from an experiment.
-func (e *Experiment) getAction(name string) (*Action, error) {
+// GetAction gets a named action from an experiment.
+func (e *Experiment) GetAction(name string) (*Action, error) {
 	if e == nil {
-		return nil, errors.New("getAction(...) called on nil experiment")
+		return nil, errors.New("GetAction(...) called on nil experiment")
 	}
 	if e.Spec.Strategy.Handlers == nil {
 		return nil, errors.New("nil handlers")
@@ -191,7 +191,7 @@ func (e *Experiment) Run(name string) error {
 	if e == nil {
 		return errors.New("Run(...) called on nil experiment")
 	}
-	action, err := e.getAction(name)
+	action, err := e.GetAction(name)
 	if err != nil {
 		return err
 	}
