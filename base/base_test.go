@@ -29,10 +29,10 @@ func TestExtrapolate(t *testing.T) {
 		M: &map[string]string{"revision": "revision1", "container": "super-container"},
 	}
 	str = `hello {{{ romeo . "revision" alpha tango }} world`
-	extrapolated, err = tags.Extrapolate(&str)
+	_, err = tags.Extrapolate(&str)
 	assert.Error(t, err)
 
 	str = `hello {{ index . 0 }} world`
-	extrapolated, err = tags.Extrapolate(&str)
+	_, err = tags.Extrapolate(&str)
 	assert.Error(t, err)
 }
