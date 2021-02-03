@@ -64,12 +64,11 @@ func TestEnv(t *testing.T) {
 
 	os.Unsetenv("EXPERIMENT_NAME")
 	os.Unsetenv("EXPERIMENT_NAMESPACE")
-	name, namespace, err = getExperimentNN()
+	_, _, err = getExperimentNN()
 	assert.Error(t, err)
 
 	os.Setenv("EXPERIMENT_NAMESPACE", "namespace")
-	name, namespace, err = getExperimentNN()
+	_, namespace, err = getExperimentNN()
 	assert.Equal(t, "namespace", namespace)
 	assert.Error(t, err)
-
 }
