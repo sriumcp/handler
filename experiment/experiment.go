@@ -2,13 +2,11 @@
 package experiment
 
 import (
-	"encoding/json"
+	"context"
 	"errors"
 
 	iter8 "github.com/iter8-tools/etc3/api/v2alpha1"
 	"github.com/iter8-tools/handler/base"
-	"github.com/iter8-tools/handler/lib/def"
-	"github.com/iter8-tools/handler/lib/knative"
 	"github.com/iter8-tools/handler/utils"
 	"github.com/sirupsen/logrus"
 )
@@ -44,64 +42,8 @@ type Handlers struct {
 	Actions *ActionMap `json:"actions,omitempty" yaml:"actions,omitempty"`
 }
 
-// ActionMap type represents a map whose keys are actions names, and whose values are actions.
-type ActionMap map[string]*Action
-
-// Action is a slice of Tasks.
-type Action []base.Task
-
-// UnmarshalJSON builds an ActionMap from a byte slice.
-func (sm *ActionMap) UnmarshalJSON(data []byte) error {
-	actionMapRaw := make(map[string][]json.RawMessage)
-	actions := make(ActionMap)
-	var err error
-	if err = json.Unmarshal(data, &actionMapRaw); err == nil {
-		// first create raw actions, then extract TaskMeta from then, and then extract tasks
-		for actionName, rawTasksForAction := range actionMapRaw {
-			action := make(Action, len(rawTasksForAction))
-			actions[actionName] = &action
-			for i := 0; i < len(rawTasksForAction); i++ {
-				taskMeta := &base.TaskMeta{}
-				if err = json.Unmarshal(rawTasksForAction[i], taskMeta); err == nil {
-					// demux library here...
-					var makeTask func(t *base.TaskMeta) (base.Task, error)
-					switch taskMeta.Library {
-					case "default":
-						makeTask = def.MakeTask
-					case "knative":
-						makeTask = knative.MakeTask
-					default:
-						return errors.New("Unrecognized task library")
-					}
-					var task base.Task
-					if task, err = makeTask(taskMeta); err == nil {
-						if err = json.Unmarshal(rawTasksForAction[i], task); err == nil {
-							action[i] = task
-							log.Trace("using... ")
-						} else {
-							taskBytes, _ := json.MarshalIndent(task, "", "  ")
-							log.Error("cannot unmarshal task: " + string(taskBytes))
-							log.Error(err)
-							return err
-						}
-					} else {
-						log.Error("cannot make task: ", *taskMeta)
-						return err
-					}
-				} else {
-					log.Error(err)
-					return errors.New("cannot unmarshal ActionMap")
-				}
-			}
-		}
-	}
-	if err != nil {
-		log.Error("cannot unmarshal ActionMap")
-		return err
-	}
-	*sm = actions
-	return nil
-}
+// ActionMap type represents a map whose keys are actions names, and whose values are slices of TaskSpecs.
+type ActionMap map[string][]base.TaskSpec
 
 // Builder helps in construction of an experiment.
 type Builder struct {
@@ -114,4 +56,40 @@ type Builder struct {
 func (b *Builder) Build() (*Experiment, error) {
 	log.Trace(b)
 	return b.exp, b.err
+}
+
+// GetExperimentFromContext gets the experiment object from given context.
+func GetExperimentFromContext(ctx context.Context) (*Experiment, error) {
+	//	ctx := context.WithValue(context.Background(), base.ContextKey("experiment"), e)
+	if v := ctx.Value("experiment"); v != nil {
+		log.Debug("found experiment")
+		var e *Experiment
+		var ok bool
+		if e, ok = v.(*Experiment); !ok {
+			return nil, errors.New("context has experiment value with wrong type")
+		}
+		return e, nil
+	}
+	return nil, errors.New("context has no experiment key")
+}
+
+// Extrapolate extrapolates input arguments based on tags of the recommended baseline in the experiment.
+func (exp *Experiment) Extrapolate(inputArgs []string) ([]string, error) {
+	var recommendedBaseline string
+	var args []string
+	var err error
+	if recommendedBaseline, err = exp.GetRecommendedBaseline(); err == nil {
+		var versionDetail *iter8.VersionDetail
+		if versionDetail, err = exp.GetVersionDetail(recommendedBaseline); err == nil {
+			tags := base.Tags{M: versionDetail.Tags}
+			// get the tags
+			args := make([]string, len(inputArgs))
+			for i := 0; i < len(args); i++ {
+				if args[i], err = tags.Extrapolate(&inputArgs[i]); err != nil {
+					break
+				}
+			}
+		}
+	}
+	return args, err
 }

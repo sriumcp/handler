@@ -270,7 +270,7 @@ spec:
                     - Canary
                     - A/B
                     - A/B/N
-                    - Performance
+                    - Conformance
                     - BlueGreen
                     type: string
                   weights:
@@ -279,7 +279,7 @@ spec:
                     properties:
                       algorithm:
                         description: Algorithm is the traffic split algorithm Default
-                          will be None for performance experiments, "fixed_split"
+                          will be None for conformance experiments, "fixed_split"
                           for bluegreen experiments, and "progressive" otherwise
                         enum:
                         - FixedSplit
@@ -376,6 +376,7 @@ spec:
                     required:
                     - name
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   candidates:
                     description: Candidates is list candidate versions
                     items:
@@ -432,6 +433,7 @@ spec:
                       required:
                       - name
                       type: object
+                      x-kubernetes-preserve-unknown-fields: true
                     type: array
                 required:
                 - baseline
@@ -656,8 +658,9 @@ spec:
                     type:
                       description: Type of the condition
                       enum:
-                      - ExperimentCompleted
-                      - ExperimentFailed
+                      - Completed
+                      - Failed
+                      - TargetAcquired
                       type: string
                   required:
                   - status

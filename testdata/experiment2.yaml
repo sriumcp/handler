@@ -148,7 +148,7 @@ spec:
               - build
               - .
         - library: knative
-          task: init-experiment
+          task: init-git-experiment
     type: Canary
     weights:
       algorithm: Progressive
@@ -230,10 +230,10 @@ status:
     message: Completed Iteration 7
     reason: IterationUpdate
     status: "False"
-    type: ExperimentCompleted
+    type: Completed
   - lastTransitionTime: "2020-12-28T18:33:34Z"
     status: "False"
-    type: ExperimentFailed
+    type: Failed
   currentWeightDistribution:
   - name: default
     value: 45

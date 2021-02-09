@@ -16,21 +16,34 @@ func init() {
 	log = utils.GetLogger()
 }
 
-// TaskMeta identifies Library and Name of a task.
-type TaskMeta struct {
+// TaskSpec struct contains the specification of a task.
+type TaskSpec struct {
 	// Library where this task is defined.
 	Library string `json:"library" yaml:"library"`
 	// Name (type) of this task.
 	Task string `json:"task" yaml:"task"`
+	// With holds inputs to this task.
+	With map[string]interface{} `json:"with,omitempty" yaml:"with,omitempty"`
 }
 
 // Task defines common method signatures for every task.
 type Task interface {
 	Run(ctx context.Context) error
-	DryRun()
-	LocalRun(ctx context.Context) error
-	LocallyRunnable() bool
-	Extrapolate(tags *Tags) error
+}
+
+// Action is a slice of Tasks.
+type Action []Task
+
+// Run the given action.
+func (a *Action) Run(ctx context.Context) error {
+	for i := 0; i < len(*a); i++ {
+		log.Info("------")
+		err := (*a)[i].Run(ctx)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Tags supports string extrapolation using tags.

@@ -177,11 +177,11 @@ status:
       message: "Start handler 'start' launched"
       reason: StartHandlerLaunched
       status: "False"
-      type: ExperimentCompleted
+      type: Completed
     - 
       lastTransitionTime: "2020-12-27T21:55:48Z"
       status: "False"
-      type: ExperimentFailed
+      type: Failed
   initTime: "2020-12-27T21:55:48Z"
   lastUpdateTime: "2020-12-27T21:55:48Z"
   message: "StartHandlerLaunched: Start handler 'start' launched"

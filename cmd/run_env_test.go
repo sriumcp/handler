@@ -27,10 +27,10 @@ var _ = Describe("Experiment's handler field", func() {
 		By(by)
 		os.Setenv("EXPERIMENT_NAME", "sklearn-iris-experiment-6")
 		os.Setenv("EXPERIMENT_NAMESPACE", "default")
-		name, namespace, err := getExperimentNN()
+		nn, err := getExperimentNN()
 		Expect(err).ToNot(HaveOccurred())
-		Expect("sklearn-iris-experiment-6").To(Equal(name))
-		Expect("default").To(Equal(namespace))
+		Expect("sklearn-iris-experiment-6").To(Equal(nn.Name))
+		Expect("default").To(Equal(nn.Namespace))
 
 		action = "start"
 		runCmd.Run(nil, nil)

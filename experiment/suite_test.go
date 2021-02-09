@@ -40,7 +40,10 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	By("initializing k8sclient")
-	k8sClient, err = experiment.GetClient(restConf)
+	experiment.GetConfig = func() (*rest.Config, error) {
+		return restConf, err
+	}
+	k8sClient, err = experiment.GetClient()
 	Expect(k8sClient).ToNot(BeNil())
 	Expect(err).ToNot(HaveOccurred())
 

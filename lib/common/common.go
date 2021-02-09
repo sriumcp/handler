@@ -1,4 +1,4 @@
-package def
+package common
 
 import (
 	"errors"
@@ -15,7 +15,7 @@ func init() {
 }
 
 // MakeTask constructs a Task from a TaskSpec or returns an error if any.
-func MakeTask(t *base.TaskMeta) (base.Task, error) {
+func MakeTask(t *base.TaskSpec) (base.Task, error) {
 	switch t.Task {
 	case "exec":
 		return MakeExec(t)
