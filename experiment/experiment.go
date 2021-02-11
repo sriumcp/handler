@@ -81,8 +81,12 @@ func (exp *Experiment) Extrapolate(inputArgs []string) ([]string, error) {
 	if recommendedBaseline, err = exp.GetRecommendedBaseline(); err == nil {
 		var versionDetail *iter8.VersionDetail
 		if versionDetail, err = exp.GetVersionDetail(recommendedBaseline); err == nil {
-			tags := base.Tags{M: versionDetail.Tags}
 			// get the tags
+			tags := base.Tags{M: make(map[string]string)}
+			tags.M["name"] = versionDetail.Name
+			for i := 0; i < len(versionDetail.Variables); i++ {
+				tags.M[versionDetail.Variables[i].Name] = tags.M[versionDetail.Variables[i].Value]
+			}
 			args := make([]string, len(inputArgs))
 			for i := 0; i < len(args); i++ {
 				if args[i], err = tags.Extrapolate(&inputArgs[i]); err != nil {

@@ -48,7 +48,7 @@ func (a *Action) Run(ctx context.Context) error {
 
 // Tags supports string extrapolation using tags.
 type Tags struct {
-	M *map[string]string
+	M map[string]string
 }
 
 // Extrapolate str using tags.

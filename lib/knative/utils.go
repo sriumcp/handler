@@ -77,18 +77,18 @@ func checkKsvcReadiness(ksvc *servingv1.Service) error {
 
 // updateLocalExp updates the given Knative experiment struct.
 func updateLocalExp(e *experiment.Experiment, ksvc *servingv1.Service, t *InitExperimentTask) error {
-	switch e.Spec.Strategy.Type {
-	case v2alpha1.StrategyTypePerformance:
-		return updateLocalPerformanceExp(e, ksvc, t)
-	case v2alpha1.StrategyTypeCanary:
+	switch e.Spec.Strategy.TestingPattern {
+	case v2alpha1.TestingPatternConformance:
+		return updateLocalConformanceExp(e, ksvc, t)
+	case v2alpha1.TestingPatternCanary:
 		return updateLocalCanaryExp(e, ksvc, t)
 	default:
 		return errors.New("unsupported testing pattern found in experiment")
 	}
 }
 
-// updateLocalPerformanceExp updates the given Knative performance experiment struct.
-func updateLocalPerformanceExp(e *experiment.Experiment, ksvc *servingv1.Service, t *InitExperimentTask) error {
+// updateLocalConformanceExp updates the given Knative conformance experiment struct.
+func updateLocalConformanceExp(e *experiment.Experiment, ksvc *servingv1.Service, t *InitExperimentTask) error {
 	var err error
 	if len(t.With.Indexes) > 1 {
 		return errors.New("performance experiment cannot have more than one traffic target")
@@ -97,15 +97,16 @@ func updateLocalPerformanceExp(e *experiment.Experiment, ksvc *servingv1.Service
 	if tt, err = findPerformanceTrafficTarget(e, ksvc, t); err == nil {
 		// if a baseline is given, update revision
 		if e.Spec.VersionInfo != nil {
-			(*e.Spec.VersionInfo.Baseline.Tags)["revision"] = tt.RevisionName
+			experiment.UpdateVariable(&e.Spec.VersionInfo.Baseline, "revision", tt.RevisionName)
 		} else {
-			// else attach new versionInfo with baseline
+			// else attach new versionInfo for baseline
 			e.Spec.VersionInfo = &v2alpha1.VersionInfo{
 				Baseline: v2alpha1.VersionDetail{
 					Name: "baseline",
-					Tags: &map[string]string{
-						"revision": tt.RevisionName,
-					},
+					Variables: []v2alpha1.Variable{{
+						Name:  "revision",
+						Value: tt.RevisionName,
+					}},
 				},
 			}
 		}
@@ -138,14 +139,17 @@ func updateLocalCanaryExp(e *experiment.Experiment, ksvc *servingv1.Service, t *
 	if b, c, err = findCanaryTrafficTargets(e, ksvc, t); err == nil {
 		// fix baseline
 		if e.Spec.VersionInfo != nil {
-			(*e.Spec.VersionInfo.Baseline.Tags)["revision"] = b.RevisionName
+			experiment.UpdateVariable(&e.Spec.VersionInfo.Baseline, "revision", b.RevisionName)
 		} else {
 			// else attach new versionInfo with baseline
 			e.Spec.VersionInfo = &v2alpha1.VersionInfo{
 				Baseline: v2alpha1.VersionDetail{
 					Name: "baseline",
-					Tags: &map[string]string{
-						"revision": b.RevisionName,
+					Variables: []v2alpha1.Variable{
+						{
+							Name:  "revision",
+							Value: b.RevisionName,
+						},
 					},
 				},
 			}
@@ -156,13 +160,16 @@ func updateLocalCanaryExp(e *experiment.Experiment, ksvc *servingv1.Service, t *
 			e.Spec.VersionInfo.Candidates = []v2alpha1.VersionDetail{
 				{
 					Name: "candidate",
-					Tags: &map[string]string{
-						"revision": c.RevisionName,
+					Variables: []v2alpha1.Variable{
+						{
+							Name:  "revision",
+							Value: c.RevisionName,
+						},
 					},
 				},
 			}
 		} else {
-			(*e.Spec.VersionInfo.Candidates[0].Tags)["revision"] = c.RevisionName
+			experiment.UpdateVariable(&e.Spec.VersionInfo.Candidates[0], "revision", c.RevisionName)
 		}
 	}
 	return err

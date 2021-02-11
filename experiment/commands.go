@@ -3,6 +3,7 @@ package experiment
 import (
 	"errors"
 
+	"github.com/iter8-tools/etc3/api/v2alpha1"
 	iter8 "github.com/iter8-tools/etc3/api/v2alpha1"
 	"github.com/iter8-tools/handler/base"
 )
@@ -84,6 +85,24 @@ func (e *Experiment) GetActionSpec(name string) ([]base.TaskSpec, error) {
 		return actionSpec, nil
 	}
 	return nil, errors.New("action with name " + name + " not found")
+}
+
+// UpdateVariable updates a variable within the given VersionDetail. If the variable is already present in the VersionDetail object, the pre-existing value takes precedence and is retained; if not, the new value is inserted.
+func UpdateVariable(v *v2alpha1.VersionDetail, name string, value string) error {
+	if v == nil {
+		return errors.New("nil valued version detail")
+	}
+	for i := 0; i < len(v.Variables); i++ {
+		if v.Variables[i].Name == name {
+			log.Info("variable with same name already present in version detail")
+			return nil
+		}
+	}
+	v.Variables = append(v.Variables, v2alpha1.Variable{
+		Name:  name,
+		Value: value,
+	})
+	return nil
 }
 
 // // Run extrapolates an experiment and runs a named action within it.

@@ -37,9 +37,4 @@ func TestEnv(t *testing.T) {
 	os.Unsetenv("EXPERIMENT_NAMESPACE")
 	_, err = getExperimentNN()
 	assert.Error(t, err)
-
-	os.Setenv("EXPERIMENT_NAMESPACE", "namespace")
-	nn, err = getExperimentNN()
-	assert.Equal(t, "namespace", nn.Namespace)
-	assert.Error(t, err)
 }
