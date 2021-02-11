@@ -29,17 +29,12 @@ type Spec struct {
 	Strategy Strategy `json:"strategy" yaml:"strategy"`
 }
 
-// Strategy is an enhancement of v2alpha1.Strategy struct that contains task list information.
+// Strategy is an enhancement of v2alpha1.Strategy struct that contains actions.
 type Strategy struct {
 	iter8.Strategy
-	Handlers *Handlers `json:"handlers,omitempty" yaml:"handlers,omitempty"`
-}
-
-// Handlers is an enhancement of v2alpha1.Handlers struct that contains task list information.
-type Handlers struct {
-	iter8.Handlers
+	Handlers *iter8.Handlers `json:"handlers,omitempty" yaml:"handlers,omitempty"`
 	// Map of task lists.
-	Actions *ActionMap `json:"actions,omitempty" yaml:"actions,omitempty"`
+	Actions ActionMap `json:"actions,omitempty" yaml:"actions,omitempty"`
 }
 
 // ActionMap type represents a map whose keys are actions names, and whose values are slices of TaskSpecs.
@@ -61,7 +56,7 @@ func (b *Builder) Build() (*Experiment, error) {
 // GetExperimentFromContext gets the experiment object from given context.
 func GetExperimentFromContext(ctx context.Context) (*Experiment, error) {
 	//	ctx := context.WithValue(context.Background(), base.ContextKey("experiment"), e)
-	if v := ctx.Value("experiment"); v != nil {
+	if v := ctx.Value(base.ContextKey("experiment")); v != nil {
 		log.Debug("found experiment")
 		var e *Experiment
 		var ok bool

@@ -144,7 +144,7 @@ spec:
       finish: finish
       rollback: finish
       start: start
-      actions: 20
+    actions: 20
     testingPattern: Canary
     deploymentPattern: Progressive
     weights: 

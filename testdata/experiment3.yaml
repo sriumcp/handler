@@ -146,15 +146,8 @@ spec:
       start: start
     actions:
       start:
-      - library: default
-        task: exec
-        with:
-          cmd: echo
-          args:
-          - "hello-world"
-          - 'hello {{ revision }} world'
-          - 'hello {{ omg }} world'
-      - library: default
+      - 23
+      - library: common
         task: exec
         with:
           cmd: helm
@@ -164,7 +157,7 @@ spec:
           - 20
           - 40.5
       finish:
-      - library: default
+      - library: common
         task: exec
         with:
           cmd: kustomize

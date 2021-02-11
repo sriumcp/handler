@@ -147,7 +147,7 @@ spec:
     actions:
       start: ok
       finish:
-      - library: default
+      - library: common
         task: exec
         with:
           cmd: kustomize

@@ -35,10 +35,19 @@ var _ = Describe("Experiment's handler field", func() {
 		It("should handle non-existing experiments properly", func() {
 			By("signaling error")
 			b := &experiment.Builder{}
+			// store k8sclient defaults
+			numAttempts := experiment.NumAttempt
+			period := experiment.Period
+			// change k8sclient defaults
+			experiment.NumAttempt = 2
+			experiment.Period = 2
 			_, err := b.FromCluster(&types.NamespacedName{
 				Name:      "non-existent",
 				Namespace: "default",
 			}).Build()
+			// change k8sclient defaults
+			experiment.NumAttempt = numAttempts
+			experiment.Period = period
 			Expect(err).To(HaveOccurred())
 		})
 

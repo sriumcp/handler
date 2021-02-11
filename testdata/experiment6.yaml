@@ -146,22 +146,22 @@ spec:
       start: start
     actions:
       start:
-      - library: default
+      - library: common
         task: exec
         with:
           cmd: echo
           args:
           - "hello-world"
-          - 'hello {{ revision }} world'
-          - 'hello {{ omg }} world'
-      - library: default
+          - 'hello {{ .revision }} world'
+          - 'hello {{ .omg }} world'
+      - library: common
         task: exec
         with:
           cmd: helm
           args:
           - version
       finish:
-      - library: default
+      - library: common
         task: exec
         with:
           cmd: kustomize

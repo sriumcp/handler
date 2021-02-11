@@ -1,20 +1,14 @@
 package experiment
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/iter8-tools/handler/utils"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBuildErrorUnknownTask(t *testing.T) {
-	_, err := (&Builder{}).FromFile(utils.CompletePath("../", "testdata/experiment2.yaml")).Build()
-	assert.Error(t, err)
-}
-
 func TestBuildErrorGarbageYAML(t *testing.T) {
-	_, err := (&Builder{}).FromFile(utils.CompletePath("../", "testdata/experiment3.yaml")).Build()
+	_, err := (&Builder{}).FromFile(utils.CompletePath("../", "testdata/garbage.yaml")).Build()
 	assert.Error(t, err)
 }
 
@@ -23,20 +17,8 @@ func TestInvalidAction(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestInvalidExecTask(t *testing.T) {
-	exp, err := (&Builder{}).FromFile(utils.CompletePath("../", "testdata/experiment4.yaml")).Build()
-	jm, _ := json.MarshalIndent(exp, "", "  ")
-	log.Trace("experiment with invalid exec task:", string(jm))
-	assert.Error(t, err)
-}
-
 func TestInvalidActions(t *testing.T) {
 	_, err := (&Builder{}).FromFile(utils.CompletePath("../", "testdata/experiment5.yaml")).Build()
-	assert.Error(t, err)
-}
-
-func TestInvalidTaskMeta(t *testing.T) {
-	_, err := (&Builder{}).FromFile(utils.CompletePath("../", "testdata/experiment8.yaml")).Build()
 	assert.Error(t, err)
 }
 

@@ -75,13 +75,10 @@ func (e *Experiment) GetActionSpec(name string) ([]base.TaskSpec, error) {
 	if e == nil {
 		return nil, errors.New("GetActionSpec(...) called on nil experiment")
 	}
-	if e.Spec.Strategy.Handlers == nil {
-		return nil, errors.New("nil handlers")
-	}
-	if e.Spec.Strategy.Handlers.Actions == nil {
+	if e.Spec.Strategy.Actions == nil {
 		return nil, errors.New("nil actions")
 	}
-	if actionSpec, ok := (*e.Spec.Strategy.Handlers.Actions)[name]; ok {
+	if actionSpec, ok := e.Spec.Strategy.Actions[name]; ok {
 		return actionSpec, nil
 	}
 	return nil, errors.New("action with name " + name + " not found")

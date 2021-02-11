@@ -61,11 +61,15 @@ func run(cmd *cobra.Command, args []string) error {
 				var action base.Action
 				if action, err = GetAction(exp, actionSpec); err == nil {
 					ctx := context.WithValue(context.Background(), base.ContextKey("experiment"), exp)
+					log.Info("creating context for experiment")
 					err = action.Run(ctx)
 					if err == nil {
 						return nil
 					}
 				}
+			} else {
+				log.Error("could not find specified action: " + action)
+				return nil
 			}
 		}
 	}

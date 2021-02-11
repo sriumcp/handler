@@ -50,18 +50,13 @@ var _ = Describe("Experiment's handler field", func() {
 	Context("when not containing the specified action", func() {
 		It("should exit gracefully", func() {
 			head()
-			delete(*exp.Spec.Strategy.Handlers.Actions, "start")
-			tail("with a warning")
+			delete(exp.Spec.Strategy.Actions, "start")
+			tail("with an error log")
 		})
 		It("should exit gracefully when ActionMap is nil", func() {
 			head()
-			exp.Spec.Strategy.Handlers.Actions = nil
-			tail("with a warning")
-		})
-		It("should exit gracefully when handlers is nil", func() {
-			head()
-			exp.Spec.Strategy.Handlers = nil
-			tail("with a warning")
+			exp.Spec.Strategy.Actions = nil
+			tail("with an error log")
 		})
 	})
 })

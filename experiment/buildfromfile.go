@@ -16,7 +16,7 @@ func (b *Builder) FromFile(filePath string) *Builder {
 		log.Error(err)
 		exp := &Experiment{}
 		if err = yaml.Unmarshal(data, exp); err == nil {
-			actions, _ := json.MarshalIndent(exp.Spec.Strategy.Handlers.Actions, "", "  ")
+			actions, _ := json.MarshalIndent(exp.Spec.Strategy.Actions, "", "  ")
 			log.Trace(string(actions))
 			b.exp = exp
 			return b
