@@ -31,7 +31,7 @@ var _ = BeforeSuite(func(done Done) {
 	restConf, err := testEnv.Start()
 	Expect(err).ToNot(HaveOccurred())
 	Expect(restConf).ToNot(BeNil())
-	getConfig = func() (*rest.Config, error) {
+	experiment.GetConfig = func() (*rest.Config, error) {
 		return restConf, err
 	}
 	// Install CRDs into the cluster
@@ -40,7 +40,7 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	By("initializing k8sclient")
-	k8sClient, err = experiment.GetClient(restConf)
+	k8sClient, err = experiment.GetClient()
 	Expect(k8sClient).ToNot(BeNil())
 	Expect(err).ToNot(HaveOccurred())
 

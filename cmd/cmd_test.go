@@ -11,35 +11,6 @@ import (
 func init() {
 	log = utils.GetLogger()
 }
-func TestDryRun1(t *testing.T) {
-	filePath = utils.CompletePath("../", "testdata/experiment1.yaml")
-	dryrunCmd.Run(nil, nil)
-}
-
-func TestDryRun2(t *testing.T) {
-	filePath = utils.CompletePath("../", "testdata/experiment3.yaml")
-	dryrunCmd.Run(nil, nil)
-}
-
-func TestLocalRun3(t *testing.T) {
-	filePath = utils.CompletePath("../", "testdata/experiment3.yaml")
-	localrunCmd.Run(nil, nil)
-}
-
-func TestLocalRun4(t *testing.T) {
-	filePath = utils.CompletePath("../", "testdata/experiment2.yaml")
-	localrunCmd.Run(nil, nil)
-}
-
-func TestLocalRun5(t *testing.T) {
-	action = "start"
-	task = 10
-	filePath = utils.CompletePath("../", "testdata/experiment1.yaml")
-	localrunCmd.Run(nil, nil)
-	task = 1
-	localrunCmd.Run(nil, nil)
-	action = ""
-}
 
 func TestVersion(t *testing.T) {
 	versionCmd.Run(nil, nil)
@@ -57,18 +28,13 @@ func TestInitConfigEmptyCfgFile(t *testing.T) {
 func TestEnv(t *testing.T) {
 	os.Setenv("EXPERIMENT_NAME", "name")
 	os.Setenv("EXPERIMENT_NAMESPACE", "namespace")
-	name, namespace, err := getExperimentNN()
-	assert.Equal(t, "name", name)
-	assert.Equal(t, "namespace", namespace)
+	nn, err := getExperimentNN()
+	assert.Equal(t, "name", nn.Name)
+	assert.Equal(t, "namespace", nn.Namespace)
 	assert.NoError(t, err)
 
 	os.Unsetenv("EXPERIMENT_NAME")
 	os.Unsetenv("EXPERIMENT_NAMESPACE")
-	_, _, err = getExperimentNN()
-	assert.Error(t, err)
-
-	os.Setenv("EXPERIMENT_NAMESPACE", "namespace")
-	_, namespace, err = getExperimentNN()
-	assert.Equal(t, "namespace", namespace)
+	_, err = getExperimentNN()
 	assert.Error(t, err)
 }

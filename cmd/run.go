@@ -1,51 +1,75 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"os"
 
+	"github.com/iter8-tools/handler/base"
 	"github.com/iter8-tools/handler/experiment"
+	"github.com/iter8-tools/handler/lib/common"
+	"github.com/iter8-tools/handler/lib/knative"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"k8s.io/client-go/rest"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // getExperimentNN gets the name and namespace of the experiment from environment variables.
 // Returns error if unsuccessful.
-func getExperimentNN() (name string, namespace string, err error) {
-	name = viper.GetViper().GetString("experiment_name")
-	namespace = viper.GetViper().GetString("experiment_namespace")
+func getExperimentNN() (*types.NamespacedName, error) {
+	name := viper.GetViper().GetString("experiment_name")
+	namespace := viper.GetViper().GetString("experiment_namespace")
 	if len(name) == 0 || len(namespace) == 0 {
-		return name, namespace, errors.New("invalid experiment name/namespace")
+		return nil, errors.New("invalid experiment name/namespace")
 	}
-	return name, namespace, nil
+	return &types.NamespacedName{
+		Name:      name,
+		Namespace: namespace,
+	}, nil
 }
 
-var getConfig = func() (*rest.Config, error) {
-	return config.GetConfig()
+// GetAction converts an action spec into an action.
+func GetAction(exp *experiment.Experiment, actionSpec []base.TaskSpec) (base.Action, error) {
+	action := make(base.Action, len(actionSpec))
+	var err error
+Loop:
+	for i := 0; i < len(actionSpec); i++ {
+		switch actionSpec[i].Library {
+		case "common":
+			if action[i], err = common.MakeTask(&actionSpec[i]); err != nil {
+				break Loop
+			}
+		case "knative":
+			if action[i], err = knative.MakeTask(&actionSpec[i]); err != nil {
+				break Loop
+			}
+		default:
+			err = errors.New("unknown library: " + actionSpec[i].Library)
+		}
+	}
+	return action, err
 }
 
 // run is a helper function used in the definition of runCmd cobra command.
 func run(cmd *cobra.Command, args []string) error {
-	name, namespace, err := getExperimentNN()
+	nn, err := getExperimentNN()
 	if err == nil {
-		var restConf *rest.Config
-		restConf, err = getConfig()
-		if err == nil {
-			var restClient client.Client
-			restClient, err = experiment.GetClient(restConf)
-			if err == nil {
-				var exp *experiment.Experiment
-				if exp, err = (&experiment.Builder{}).FromCluster(name, namespace, restClient).Build(); err == nil {
-					if _, err = exp.GetAction(action); err == nil {
-						err = exp.Run(action)
-					} else {
-						log.Warn("action '" + action + "' not present in experiment... exiting handler")
+		var exp *experiment.Experiment
+		if exp, err = (&experiment.Builder{}).FromCluster(nn).Build(); err == nil {
+			var actionSpec []base.TaskSpec
+			if actionSpec, err = exp.GetActionSpec(action); err == nil {
+				var action base.Action
+				if action, err = GetAction(exp, actionSpec); err == nil {
+					ctx := context.WithValue(context.Background(), base.ContextKey("experiment"), exp)
+					log.Info("creating context for experiment")
+					err = action.Run(ctx)
+					if err == nil {
 						return nil
 					}
 				}
+			} else {
+				log.Error("could not find specified action: " + action)
+				return nil
 			}
 		}
 	}

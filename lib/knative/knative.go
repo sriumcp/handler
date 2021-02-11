@@ -15,8 +15,10 @@ func init() {
 }
 
 // MakeTask constructs a Task from a TaskMeta or returns an error if any.
-func MakeTask(t *base.TaskMeta) (base.Task, error) {
+func MakeTask(t *base.TaskSpec) (base.Task, error) {
 	switch t.Task {
+	case "init-experiment":
+		return MakeInitExperiment(t)
 	default:
 		return nil, errors.New("Unknown task: " + t.Task)
 	}

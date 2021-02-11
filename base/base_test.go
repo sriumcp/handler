@@ -13,7 +13,7 @@ func init() {
 
 func TestExtrapolate(t *testing.T) {
 	tags := Tags{
-		M: &map[string]string{"revision": "revision1", "container": "super-container"},
+		M: map[string]string{"revision": "revision1", "container": "super-container"},
 	}
 	str := `hello {{ index . "revision" }} world`
 	extrapolated, err := tags.Extrapolate(&str)
@@ -26,7 +26,7 @@ func TestExtrapolate(t *testing.T) {
 	assert.Equal(t, str, extrapolated)
 
 	tags = Tags{
-		M: &map[string]string{"revision": "revision1", "container": "super-container"},
+		M: map[string]string{"revision": "revision1", "container": "super-container"},
 	}
 	str = `hello {{{ romeo . "revision" alpha tango }} world`
 	_, err = tags.Extrapolate(&str)
