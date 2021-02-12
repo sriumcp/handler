@@ -8,38 +8,6 @@ import (
 	"github.com/iter8-tools/handler/base"
 )
 
-// // extrapolate an experiment.
-// func (e *Experiment) extrapolate() (er error) {
-// 	if e == nil {
-// 		return errors.New("extrapolate called on nil experiment")
-// 	}
-// 	if e.Spec.Strategy.Handlers == nil || e.Spec.Strategy.Handlers.Actions == nil {
-// 		return nil
-// 	}
-// 	if rb, err := e.GetRecommendedBaseline(); err == nil {
-// 		if version, err := e.getVersionDetail(rb); err == nil {
-// 			if version.Tags == nil {
-// 				return nil
-// 			}
-// 			for _, action := range *e.Spec.Strategy.Handlers.Actions {
-// 				for i := 0; i < len(*action); i++ {
-// 					if err = (*action)[i].Extrapolate(&base.Tags{M: version.Tags}); err != nil {
-// 						log.Error("cannot extrapolate experiment: ", err)
-// 						return err
-// 					}
-// 				}
-// 			}
-// 		} else {
-// 			log.Error("error getting version detail")
-// 			return err
-// 		}
-// 	} else {
-// 		log.Error("error getting recommended baseline")
-// 		return err
-// 	}
-// 	return nil
-// }
-
 // GetRecommendedBaseline from the experiment.
 func (e *Experiment) GetRecommendedBaseline() (string, error) {
 	if e == nil {
@@ -101,27 +69,3 @@ func UpdateVariable(v *v2alpha1.VersionDetail, name string, value string) error 
 	})
 	return nil
 }
-
-// // Run extrapolates an experiment and runs a named action within it.
-// func (e *Experiment) Run(name string) error {
-// 	if e == nil {
-// 		return errors.New("Run(...) called on nil experiment")
-// 	}
-// 	action, err := e.GetAction(name)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if err := e.extrapolate(); err != nil {
-// 		log.Error(err)
-// 		return err
-// 	}
-// 	ctx := context.WithValue(context.Background(), base.ContextKey("experiment"), e)
-// 	for i := 0; i < len(*action); i++ {
-// 		log.Info("------")
-// 		err = (*action)[i].Run(ctx)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
-// 	return nil
-// }

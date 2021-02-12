@@ -27,6 +27,26 @@ func TestStringAction(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestGetRecommendedBaseline(t *testing.T) {
+	var err error
+	var exp *Experiment
+	var b string
+	exp, err = (&Builder{}).FromFile(utils.CompletePath("../", "testdata/experiment6.yaml")).Build()
+	assert.NoError(t, err)
+	b, err = exp.GetRecommendedBaseline()
+	assert.NoError(t, err)
+	assert.Equal(t, "default", b)
+
+	exp, err = (&Builder{}).FromFile(utils.CompletePath("../", "testdata/experiment2.yaml")).Build()
+	assert.NoError(t, err)
+	b, err = exp.GetRecommendedBaseline()
+	assert.Error(t, err)
+
+	exp = nil
+	b, err = exp.GetRecommendedBaseline()
+	assert.Error(t, err)
+}
+
 // func TestExtrapolateWithoutHandlerStanza(t *testing.T) {
 // 	var e *Experiment = &Experiment{}
 // 	assert.NoError(t, e.extrapolate())
