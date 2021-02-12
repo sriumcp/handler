@@ -37,7 +37,7 @@ var Period = 18 * time.Second
 
 // GetClient constructs and returns a K8s client.
 // The returned client has experiment.Experiment type registered.
-func GetClient() (rc client.Client, err error) {
+var GetClient = func() (rc client.Client, err error) {
 	var restConf *rest.Config
 	restConf, err = GetConfig()
 	if err != nil {

@@ -26,12 +26,14 @@ type InitExperimentTask struct {
 
 // Run executes an InitExperimentTask
 func (t *InitExperimentTask) Run(ctx context.Context) error {
+	log.Trace("init experiment task run started...")
 	var e *experiment.Experiment
 	var err error
 	if e, err = experiment.GetExperimentFromContext(ctx); err == nil {
 		var nn *types.NamespacedName
 		if nn, err = GetNamespacedNameForKsvc(e); err == nil {
 			var ksvc *servingv1.Service
+			log.Trace("Getting svc with namespaced name... ", *nn)
 			if ksvc, err = GetKnativeSvc(nn); err == nil {
 				if err = checkKsvcReadiness(ksvc); err == nil {
 					if err = updateLocalExp(e, ksvc, t); err == nil {
