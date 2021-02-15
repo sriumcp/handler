@@ -69,3 +69,16 @@ func UpdateVariable(v *v2alpha1.VersionDetail, name string, value string) error 
 	})
 	return nil
 }
+
+// FindVariableInVersionDetail scans the variables slice in the given version detail and returns the value of the given variable.
+func FindVariableInVersionDetail(v *v2alpha1.VersionDetail, name string) (string, error) {
+	if v == nil {
+		return "", errors.New("nil valued VersionDetail")
+	}
+	for i := 0; i < len(v.Variables); i++ {
+		if v.Variables[i].Name == name {
+			return v.Variables[i].Value, nil
+		}
+	}
+	return "", errors.New("variable not present in VersionDetail")
+}

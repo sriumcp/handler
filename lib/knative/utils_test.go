@@ -1,10 +1,13 @@
 package knative
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"k8s.io/apimachinery/pkg/types"
+	servingv1 "knative.dev/serving/pkg/apis/serving/v1"
 
+	"github.com/ghodss/yaml"
 	"github.com/iter8-tools/handler/experiment"
 	"github.com/iter8-tools/handler/utils"
 	"github.com/stretchr/testify/assert"
@@ -30,4 +33,15 @@ func TestGetNamespacedNameForKsvc(t *testing.T) {
 	nn, err = GetNamespacedNameForKsvc(exp)
 	assert.Nil(t, nn)
 	assert.Error(t, err)
+}
+
+func TestRevisionPresentInKsvc(t *testing.T) {
+	// get ksvc
+	ksvcBytes, err := ioutil.ReadFile(utils.CompletePath("../../", "testdata/knative/onerevision.yaml"))
+	ksvc := &servingv1.Service{}
+	err = yaml.Unmarshal(ksvcBytes, ksvc)
+	assert.NoError(t, err)
+
+	// assert revision in ksvc
+	assert.True(t, revisionPresentInKsvc("sample-application-v1", ksvc))
 }

@@ -21,7 +21,6 @@ func TestAPI(t *testing.T) {
 }
 
 var _ = BeforeSuite(func(done Done) {
-	log = utils.GetLogger()
 	log.SetOutput(GinkgoWriter)
 
 	By("bootstrapping test environment")

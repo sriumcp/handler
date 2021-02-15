@@ -81,114 +81,113 @@ func checkKsvcReadiness(ksvc *servingv1.Service) error {
 }
 
 // updateLocalExp updates the given Knative experiment struct.
-func updateLocalExp(e *experiment.Experiment, ksvc *servingv1.Service, t *InitExperimentTask) error {
+func updateLocalExp(e *experiment.Experiment, ksvc *servingv1.Service) error {
 	switch e.Spec.Strategy.TestingPattern {
 	case v2alpha1.TestingPatternConformance:
-		return updateLocalConformanceExp(e, ksvc, t)
+		return updateLocalConformanceExp(e, ksvc)
 	case v2alpha1.TestingPatternCanary:
-		return updateLocalCanaryExp(e, ksvc, t)
+		return updateLocalCanaryExp(e, ksvc)
 	default:
 		return errors.New("unsupported testing pattern found in experiment")
 	}
 }
 
 // updateLocalConformanceExp updates the given Knative conformance experiment struct.
-func updateLocalConformanceExp(e *experiment.Experiment, ksvc *servingv1.Service, t *InitExperimentTask) error {
-	var err error
-	if len(t.With.Indexes) > 1 {
-		return errors.New("performance experiment cannot have more than one traffic target")
+func updateLocalConformanceExp(e *experiment.Experiment, ksvc *servingv1.Service) error {
+	if e.Spec.VersionInfo == nil {
+		return errors.New("nil valued VersionInfo in experiment")
 	}
-	var tt *servingv1.TrafficTarget
-	if tt, err = findConformanceTrafficTarget(e, ksvc, t); err == nil {
-		// if a baseline is given, update revision
-		if e.Spec.VersionInfo != nil {
-			experiment.UpdateVariable(&e.Spec.VersionInfo.Baseline, "revision", tt.RevisionName)
-		} else {
-			// else attach new versionInfo for baseline
-			e.Spec.VersionInfo = &v2alpha1.VersionInfo{
-				Baseline: v2alpha1.VersionDetail{
-					Name:      "baseline",
-					Variables: []v2alpha1.Variable{{Name: "revision", Value: tt.RevisionName}},
-				},
-			}
+	if revision, err := findRevisionInVersionDetail(&e.Spec.VersionInfo.Baseline); err == nil {
+		if revisionPresentInKsvc(revision, ksvc) {
+			experiment.UpdateVariable(&e.Spec.VersionInfo.Baseline, "namespace", ksvc.Namespace)
+			return nil
 		}
+		return errors.New("unable to find revision in ksvc")
 	}
-	return err
+	return errors.New("unable to find revision information in conformance experiment")
 }
 
-// findConformanceTrafficTarget finds the traffic target from the given conformance experiment and ksvc.
-func findConformanceTrafficTarget(e *experiment.Experiment, ksvc *servingv1.Service, t *InitExperimentTask) (*servingv1.TrafficTarget, error) {
-	numTargets := len(ksvc.Status.Traffic)
-	var targetIndex int
-	if len(t.With.Indexes) == 0 {
-		targetIndex = numTargets - 1
-	} else {
-		targetIndex = t.With.Indexes[0]
+// findRevisionFromVersionDetail finds the name of the revision in the given VersionDetail struct.
+func findRevisionInVersionDetail(v *v2alpha1.VersionDetail) (string, error) {
+	return experiment.FindVariableInVersionDetail(v, "revision")
+}
+
+// revisionPresentInKsvc checks if the given revision is present in the ksvc.
+func revisionPresentInKsvc(revision string, ksvc *servingv1.Service) bool {
+	log.Trace("revisionPresentInKsvc invoked")
+	if ksvc == nil {
+		log.Error("nil ksvc")
+		return false
 	}
-	if targetIndex >= numTargets {
-		return nil, errors.New("invalid target index specified in initExperimentTask")
+	for i := 0; i < len(ksvc.Status.Traffic); i++ {
+		if ksvc.Status.Traffic[i].RevisionName == revision {
+			log.Trace("returning true... revision found")
+			return true
+		}
 	}
-	return &ksvc.Status.Traffic[targetIndex], nil
+	log.Error("no match found for revision name: ", revision)
+	log.Error("traffic targets", ksvc.Status.Traffic)
+	return false
 }
 
 // updateLocalCanaryExp updates the given Knative canary experiment struct.
-func updateLocalCanaryExp(e *experiment.Experiment, ksvc *servingv1.Service, t *InitExperimentTask) error {
+func updateLocalCanaryExp(e *experiment.Experiment, ksvc *servingv1.Service) error {
 	var err error
-	log.Trace("Task", *t)
-	if len(t.With.Indexes) != 0 && len(t.With.Indexes) != 2 {
-		return errors.New("invalid number of targets in canary experiment: " + fmt.Sprint(len(t.With.Indexes)))
+	if e == nil || ksvc == nil {
+		return errors.New("experiment and ksvc cannot be nil valued")
 	}
-	var b, c *servingv1.TrafficTarget
-	if b, c, err = findCanaryTrafficTargets(e, ksvc, t); err == nil {
-		// fix baseline
-		if e.Spec.VersionInfo != nil {
-			experiment.UpdateVariable(&e.Spec.VersionInfo.Baseline, "revision", b.RevisionName)
-		} else {
-			// else attach new versionInfo with baseline
-			e.Spec.VersionInfo = &v2alpha1.VersionInfo{
-				Baseline: v2alpha1.VersionDetail{
-					Name: "baseline",
-					Variables: []v2alpha1.Variable{
-						{
-							Name:  "revision",
-							Value: b.RevisionName,
-						},
-					},
-				},
+	if e.Spec.VersionInfo == nil {
+		return errors.New("baseline absent in canary experiment")
+	}
+	if len(e.Spec.VersionInfo.Candidates) != 1 {
+		return errors.New("canary experiment needs to have a single candidate")
+	}
+
+	// find baseline revision; update baseline with namespace
+	var br string
+	if br, err = findRevisionInVersionDetail(&e.Spec.VersionInfo.Baseline); err == nil {
+		experiment.UpdateVariable(&e.Spec.VersionInfo.Baseline, "namespace", ksvc.Namespace)
+		// find status.trafficTarget for baseline
+		var tt *servingv1.TrafficTarget
+		if tt, err = findTrafficTargetInStatus(ksvc, br); err == nil {
+			var tti int
+			// set its weightObjRef
+			if tti, err = findTrafficTargetIndexInSpec(tt, ksvc); err == nil {
+				e.Spec.VersionInfo.Baseline.WeightObjRef = objRefFromFieldPath(tti, ksvc)
 			}
 		}
+	}
 
-		var bw, cw int
-		if bw, err = findTrafficTargetIndexInSpec(b, ksvc); err == nil {
-			e.Spec.VersionInfo.Baseline.WeightObjRef = objRefFromFieldPath(bw, ksvc)
-		} else {
-			return err
-		}
-
-		// fix candidate
-		if len(e.Spec.VersionInfo.Candidates) == 0 {
-			e.Spec.VersionInfo.Candidates = []v2alpha1.VersionDetail{
-				{
-					Name: "candidate",
-					Variables: []v2alpha1.Variable{
-						{
-							Name:  "revision",
-							Value: c.RevisionName,
-						},
-					},
-				},
+	// repeat the above steps for baseline for candidate as well
+	// find candidate revision; update candidate with namespace
+	var cr string
+	if cr, err = findRevisionInVersionDetail(&e.Spec.VersionInfo.Candidates[0]); err == nil {
+		experiment.UpdateVariable(&e.Spec.VersionInfo.Candidates[0], "namespace", ksvc.Namespace)
+		// find status.trafficTarget for candidate
+		var tt *servingv1.TrafficTarget
+		if tt, err = findTrafficTargetInStatus(ksvc, cr); err == nil {
+			var tti int
+			// set its weightObjRef
+			if tti, err = findTrafficTargetIndexInSpec(tt, ksvc); err == nil {
+				e.Spec.VersionInfo.Candidates[0].WeightObjRef = objRefFromFieldPath(tti, ksvc)
 			}
-		} else {
-			experiment.UpdateVariable(&e.Spec.VersionInfo.Candidates[0], "revision", c.RevisionName)
-		}
-
-		if cw, err = findTrafficTargetIndexInSpec(c, ksvc); err == nil {
-			e.Spec.VersionInfo.Candidates[0].WeightObjRef = objRefFromFieldPath(cw, ksvc)
-		} else {
-			return err
 		}
 	}
+
 	return err
+}
+
+// findTrafficTargetInStatus finds the traffic target corresponding to the given revision in ksvc's status.
+func findTrafficTargetInStatus(ksvc *servingv1.Service, revision string) (*servingv1.TrafficTarget, error) {
+	if ksvc == nil {
+		return nil, errors.New("nil valued ksvc")
+	}
+	for i := 0; i < len(ksvc.Status.Traffic); i++ {
+		if ksvc.Status.Traffic[i].RevisionName == revision {
+			return &ksvc.Status.Traffic[i], nil
+		}
+	}
+	return nil, errors.New("unable to find traffic target for given revision in ksvc status")
 }
 
 // objRefFromFieldPath returns a weightObjRef to be inserted into the experiment using the given fieldPath fragment
@@ -201,32 +200,6 @@ func objRefFromFieldPath(fieldPathIndex int, ksvc *servingv1.Service) *corev1.Ob
 		APIVersion: apiVersion,
 		FieldPath:  "/spec/traffic/" + fmt.Sprint(fieldPathIndex) + "/percent",
 	}
-}
-
-// findCanaryTrafficTargets finds the traffic targets from the given canary experiment and ksvc.
-func findCanaryTrafficTargets(e *experiment.Experiment, ksvc *servingv1.Service, t *InitExperimentTask) (*servingv1.TrafficTarget, *servingv1.TrafficTarget, error) {
-	numTargets := len(ksvc.Status.Traffic)
-	if numTargets < 2 {
-		return nil, nil, errors.New("insufficient number of traffic targets in knative service")
-	}
-	baselineIndex := numTargets - 2
-	candidateIndex := numTargets - 1
-
-	switch len(t.With.Indexes) {
-	case 0:
-		// do nothing
-	case 2:
-		baselineIndex = t.With.Indexes[0]
-		candidateIndex = t.With.Indexes[1]
-	default:
-		return nil, nil, errors.New("invalid number of traffic target indexes for canary experiment: " + fmt.Sprint(len(t.With.Indexes)))
-	}
-
-	if baselineIndex < 0 || candidateIndex < 0 || baselineIndex > numTargets-1 || candidateIndex > numTargets-1 {
-		return nil, nil, errors.New("baseline or candidate index is out of bounds")
-	}
-
-	return &ksvc.Status.Traffic[baselineIndex], &ksvc.Status.Traffic[candidateIndex], nil
 }
 
 // findTrafficTargetIndexInSpec finds the index of the given traffic target within the spec.traffic stanza of the given ksvc.
