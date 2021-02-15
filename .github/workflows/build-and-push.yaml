@@ -1,6 +1,8 @@
 name: Build, test and push iter8 handler
 
 on:
+  release:
+    types: [published]
   push:
     branches:
       # Run tests and code-coverage/vet/lint when code is pushed to main. Publish `main` as Docker `latest` image.
@@ -89,7 +91,7 @@ jobs:
     # Ensure test job passes before pushing image.		
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || github.event_name == 'release'
     steps:
     - uses: actions/checkout@v2
     - uses: docker/setup-buildx-action@v1
