@@ -7,11 +7,10 @@ spec:
   target: default/sample-application
   strategy:
     testingPattern: Canary
-    handlers:
-      start: none
-      finish: none
-      rollback: none
-      failure: none
+    actions:
+      start:
+      - library: knative
+        task: init-experiment
   criteria:
     objectives:
     - metric: mean-latency
@@ -19,5 +18,16 @@ spec:
     - metric: error-rate
       upperLimit: "0.01"
   duration:
-    intervalSeconds: 20
+    intervalSeconds: 15
     iterationsPerLoop: 8
+  versionInfo:
+    baseline:
+      name: stable
+      variables:
+      - name: revision
+        value: sample-application-v1
+    candidates:
+    - name: candidate
+      variables:
+      - name: revision
+        value: sample-application-v2
