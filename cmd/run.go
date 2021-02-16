@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 
+	"github.com/iter8-tools/etc3/api/v2alpha1"
 	"github.com/iter8-tools/handler/base"
 	"github.com/iter8-tools/handler/experiment"
 	"github.com/iter8-tools/handler/lib/common"
@@ -29,7 +30,7 @@ func getExperimentNN() (*types.NamespacedName, error) {
 }
 
 // GetAction converts an action spec into an action.
-func GetAction(exp *experiment.Experiment, actionSpec []base.TaskSpec) (base.Action, error) {
+func GetAction(exp *experiment.Experiment, actionSpec v2alpha1.Action) (base.Action, error) {
 	action := make(base.Action, len(actionSpec))
 	var err error
 Loop:
@@ -56,7 +57,7 @@ func run(cmd *cobra.Command, args []string) error {
 	if err == nil {
 		var exp *experiment.Experiment
 		if exp, err = (&experiment.Builder{}).FromCluster(nn).Build(); err == nil {
-			var actionSpec []base.TaskSpec
+			var actionSpec v2alpha1.Action
 			if actionSpec, err = exp.GetActionSpec(action); err == nil {
 				var action base.Action
 				if action, err = GetAction(exp, actionSpec); err == nil {

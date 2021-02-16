@@ -5,7 +5,6 @@ import (
 
 	"github.com/iter8-tools/etc3/api/v2alpha1"
 	iter8 "github.com/iter8-tools/etc3/api/v2alpha1"
-	"github.com/iter8-tools/handler/base"
 )
 
 // GetRecommendedBaseline from the experiment.
@@ -38,8 +37,7 @@ func (e *Experiment) GetVersionDetail(versionName string) (*iter8.VersionDetail,
 }
 
 // GetActionSpec gets a named action spec from an experiment.
-// type ActionSpec []TaskSpec
-func (e *Experiment) GetActionSpec(name string) ([]base.TaskSpec, error) {
+func (e *Experiment) GetActionSpec(name string) (v2alpha1.Action, error) {
 	if e == nil {
 		return nil, errors.New("GetActionSpec(...) called on nil experiment")
 	}
