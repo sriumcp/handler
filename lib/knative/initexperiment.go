@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/iter8-tools/etc3/api/v2alpha1"
 	"github.com/iter8-tools/handler/base"
 	"github.com/iter8-tools/handler/experiment"
 	"k8s.io/apimachinery/pkg/types"
@@ -41,7 +42,7 @@ func (t *InitExperimentTask) Run(ctx context.Context) error {
 }
 
 // MakeInitExperiment converts an InitExperiment task spec into an InitExperimentTask.
-func MakeInitExperiment(t *base.TaskSpec) (base.Task, error) {
+func MakeInitExperiment(t *v2alpha1.TaskSpec) (base.Task, error) {
 	if t.Library != "knative" || t.Task != "init-experiment" {
 		return nil, errors.New("library and task need to be 'knative' and 'init-experiment'")
 	}

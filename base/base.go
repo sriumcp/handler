@@ -16,16 +16,6 @@ func init() {
 	log = utils.GetLogger()
 }
 
-// TaskSpec struct contains the specification of a task.
-type TaskSpec struct {
-	// Library where this task is defined.
-	Library string `json:"library" yaml:"library"`
-	// Name (type) of this task.
-	Task string `json:"task" yaml:"task"`
-	// With holds inputs to this task.
-	With map[string]interface{} `json:"with,omitempty" yaml:"with,omitempty"`
-}
-
 // Task defines common method signatures for every task.
 type Task interface {
 	Run(ctx context.Context) error

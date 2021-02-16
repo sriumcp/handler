@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/iter8-tools/etc3/api/v2alpha1"
 	iter8 "github.com/iter8-tools/etc3/api/v2alpha1"
 	"github.com/iter8-tools/handler/base"
 	"github.com/iter8-tools/handler/utils"
@@ -17,28 +18,10 @@ func init() {
 	log = utils.GetLogger()
 }
 
-// Experiment is an enhancement of v2alpha1.Experiment struct that contains task list information.
+// Experiment is an enhancement of v2alpha1.Experiment struct with useful methods.
 type Experiment struct {
-	iter8.Experiment
-	Spec Spec `json:"spec,omitempty" yaml:"spec,omitempty"`
+	v2alpha1.Experiment
 }
-
-// Spec is an enhancement of v2alpha1.ExperimentSpec struct that contains task list information.
-type Spec struct {
-	iter8.ExperimentSpec
-	Strategy Strategy `json:"strategy" yaml:"strategy"`
-}
-
-// Strategy is an enhancement of v2alpha1.Strategy struct that contains actions.
-type Strategy struct {
-	iter8.Strategy
-	Handlers *iter8.Handlers `json:"handlers,omitempty" yaml:"handlers,omitempty"`
-	// Map of task lists.
-	Actions ActionMap `json:"actions,omitempty" yaml:"actions,omitempty"`
-}
-
-// ActionMap type represents a map whose keys are actions names, and whose values are slices of TaskSpecs.
-type ActionMap map[string][]base.TaskSpec
 
 // Builder helps in construction of an experiment.
 type Builder struct {
