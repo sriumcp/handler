@@ -34,14 +34,20 @@ func (t *ExecTask) Run(ctx context.Context) error {
 		for i := 0; i < len(inputArgs); i++ {
 			inputArgs[i] = fmt.Sprint(t.With.Args[i])
 		}
+		log.Trace(inputArgs)
 		var args []string
 		if args, err = exp.Extrapolate(inputArgs); err == nil {
+			log.Trace("extrapolated args: ", args)
 			cmd := exec.Command(t.With.Cmd, args...)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 			log.Info("Running task: " + cmd.String())
+			log.Trace(args)
 			err = cmd.Run()
 		}
+	}
+	if err != nil {
+		log.Error(err)
 	}
 	return err
 }

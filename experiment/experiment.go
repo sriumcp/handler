@@ -63,13 +63,15 @@ func (exp *Experiment) Extrapolate(inputArgs []string) ([]string, error) {
 			tags := base.Tags{M: make(map[string]string)}
 			tags.M["name"] = versionDetail.Name
 			for i := 0; i < len(versionDetail.Variables); i++ {
-				tags.M[versionDetail.Variables[i].Name] = tags.M[versionDetail.Variables[i].Value]
+				tags.M[versionDetail.Variables[i].Name] = versionDetail.Variables[i].Value
 			}
-			args := make([]string, len(inputArgs))
+			log.Trace(tags)
+			args = make([]string, len(inputArgs))
 			for i := 0; i < len(args); i++ {
 				if args[i], err = tags.Extrapolate(&inputArgs[i]); err != nil {
 					break
 				}
+				log.Trace("input arg: ", inputArgs[i], " extrapolated arg: ", args[i])
 			}
 		}
 	}
