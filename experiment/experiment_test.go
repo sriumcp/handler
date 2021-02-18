@@ -1,10 +1,14 @@
 package experiment
 
 import (
+	"context"
 	"testing"
 
+	"github.com/iter8-tools/etc3/api/v2alpha1"
+	"github.com/iter8-tools/handler/base"
 	"github.com/iter8-tools/handler/utils"
 	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestBuildErrorGarbageYAML(t *testing.T) {
@@ -44,6 +48,50 @@ func TestGetRecommendedBaseline(t *testing.T) {
 
 	exp = nil
 	b, err = exp.GetRecommendedBaseline()
+	assert.Error(t, err)
+}
+
+func TestGetExperimentFromContext(t *testing.T) {
+	ctx := context.WithValue(context.Background(), base.ContextKey("experiment"), "hello world")
+	_, err := GetExperimentFromContext(ctx)
+	assert.Error(t, err)
+
+	_, err = GetExperimentFromContext(context.Background())
+	assert.Error(t, err)
+
+	ctx = context.WithValue(context.Background(), base.ContextKey("experiment"), &Experiment{
+		Experiment: v2alpha1.Experiment{
+			TypeMeta:   v1.TypeMeta{},
+			ObjectMeta: v1.ObjectMeta{},
+			Spec:       v2alpha1.ExperimentSpec{},
+			Status:     v2alpha1.ExperimentStatus{},
+		},
+	})
+
+	exp, err := GetExperimentFromContext(ctx)
+	assert.NotNil(t, exp)
+	assert.NoError(t, err)
+}
+
+func TestExtrapolate(t *testing.T) {
+	var err error
+	var exp *Experiment
+	var b string
+	exp, err = (&Builder{}).FromFile(utils.CompletePath("../", "testdata/experiment6.yaml")).Build()
+	assert.NoError(t, err)
+	b, err = exp.GetRecommendedBaseline()
+	assert.NoError(t, err)
+	assert.Equal(t, "default", b)
+
+	args, err := exp.Extrapolate(nil)
+	assert.Empty(t, args)
+	assert.NoError(t, err)
+
+	args, err = exp.Extrapolate([]string{"hello-world", "hello {{ .revision }} world", "hello {{ .omg }} world"})
+	assert.Equal(t, []string{"hello-world", "hello revision1 world", "hello  world"}, args)
+	assert.NoError(t, err)
+
+	args, err = exp.Extrapolate([]string{"hello-world", "hello {{ .revision }} world", "hello {{ range .ForEver .omg }} world"})
 	assert.Error(t, err)
 }
 
