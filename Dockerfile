@@ -31,17 +31,9 @@ RUN curl -fsSL -o helm-v3.5.0-linux-amd64.tar.gz https://get.helm.sh/helm-v3.5.0
 RUN tar -zxvf helm-v3.5.0-linux-amd64.tar.gz
 RUN linux-amd64/helm version
 
-# Use distroless as minimal base image to package the manager binary
-# Refer to https://github.com/GoogleContainerTools/distroless for more details
-# Use distroless as minimal base image to package the manager binary
-# Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+# Small linux image with useful shell commands
+FROM busybox:stable
 WORKDIR /
 COPY --from=builder /bin/handler /bin/handler
-COPY --from=builder /bin/sh /bin/sh
 COPY --from=builder /bin/kubectl /bin/kubectl
 COPY --from=builder /workspace/linux-amd64/helm /bin/helm
-
-USER nonroot:nonroot
-
-ENTRYPOINT ["helm", "version"]
