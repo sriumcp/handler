@@ -31,9 +31,14 @@ RUN curl -fsSL -o helm-v3.5.0-linux-amd64.tar.gz https://get.helm.sh/helm-v3.5.0
 RUN tar -zxvf helm-v3.5.0-linux-amd64.tar.gz
 RUN linux-amd64/helm version
 
+# Install Kustomize v3
+RUN curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+RUN cp kustomize /bin
+
 # Small linux image with useful shell commands
 FROM busybox:stable
 WORKDIR /
 COPY --from=builder /bin/handler /bin/handler
 COPY --from=builder /bin/kubectl /bin/kubectl
+COPY --from=builder /bin/kustomize /bin/kustomize
 COPY --from=builder /workspace/linux-amd64/helm /bin/helm
