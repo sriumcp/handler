@@ -35,14 +35,13 @@ RUN linux-amd64/helm version
 RUN curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
 RUN cp kustomize /bin
 
-# Install git
-RUN apt-get update && apt-get install -y git
-
 # Small linux image with useful shell commands
-FROM busybox:stable
+FROM debian:buster-slim
 WORKDIR /
 COPY --from=builder /bin/handler /bin/handler
 COPY --from=builder /bin/kubectl /bin/kubectl
 COPY --from=builder /bin/kustomize /bin/kustomize
 COPY --from=builder /workspace/linux-amd64/helm /bin/helm
-COPY --from=builder /usr/bin/git /bin/git
+
+# Install git
+RUN apt-get update && apt-get install -y git
