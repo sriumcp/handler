@@ -15,8 +15,9 @@ import (
 
 // ExecInputs contain the name and arguments of the command to be executed.
 type ExecInputs struct {
-	Cmd  string        `json:"cmd" yaml:"cmd"`
-	Args []interface{} `json:"args,omitempty" yaml:"args,omitempty"`
+	Cmd                  string        `json:"cmd" yaml:"cmd"`
+	Args                 []interface{} `json:"args,omitempty" yaml:"args,omitempty"`
+	DisableInterpolation bool          `json:"disableInterpolation,omitempty" json:"disableInterpolation,omitempty"`
 }
 
 // ExecTask encapsulates a command that can be executed.
@@ -36,8 +37,13 @@ func (t *ExecTask) Run(ctx context.Context) error {
 		}
 		log.Trace(inputArgs)
 		var args []string
-		if args, err = exp.Extrapolate(inputArgs); err == nil {
-			log.Trace("extrapolated args: ", args)
+		if t.With.DisableInterpolation {
+			args = inputArgs
+		} else {
+			args, err = exp.Interpolate(inputArgs)
+		}
+		if err == nil {
+			log.Trace("interpolated args: ", args)
 			cmd := exec.Command(t.With.Cmd, args...)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr

@@ -51,8 +51,8 @@ func GetExperimentFromContext(ctx context.Context) (*Experiment, error) {
 	return nil, errors.New("context has no experiment key")
 }
 
-// Extrapolate extrapolates input arguments based on tags of the recommended baseline in the experiment.
-func (exp *Experiment) Extrapolate(inputArgs []string) ([]string, error) {
+// Interpolate interpolates input arguments based on tags of the recommended baseline in the experiment.
+func (exp *Experiment) Interpolate(inputArgs []string) ([]string, error) {
 	var recommendedBaseline string
 	var args []string
 	var err error
@@ -68,10 +68,10 @@ func (exp *Experiment) Extrapolate(inputArgs []string) ([]string, error) {
 			log.Trace(tags)
 			args = make([]string, len(inputArgs))
 			for i := 0; i < len(args); i++ {
-				if args[i], err = tags.Extrapolate(&inputArgs[i]); err != nil {
+				if args[i], err = tags.Interpolate(&inputArgs[i]); err != nil {
 					break
 				}
-				log.Trace("input arg: ", inputArgs[i], " extrapolated arg: ", args[i])
+				log.Trace("input arg: ", inputArgs[i], " interpolated arg: ", args[i])
 			}
 		}
 	}

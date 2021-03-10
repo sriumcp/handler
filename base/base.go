@@ -41,8 +41,8 @@ type Tags struct {
 	M map[string]string
 }
 
-// Extrapolate str using tags.
-func (tags *Tags) Extrapolate(str *string) (string, error) {
+// Interpolate str using tags.
+func (tags *Tags) Interpolate(str *string) (string, error) {
 	if tags == nil || tags.M == nil { // return a copy of the string
 		return *str, nil
 	}
@@ -54,10 +54,10 @@ func (tags *Tags) Extrapolate(str *string) (string, error) {
 			return string(buf.Bytes()), nil
 		}
 		log.Error("template execution error: ", err)
-		return "", errors.New("cannot extrapolate string")
+		return "", errors.New("cannot interpolate string")
 	}
 	log.Error("template creation error: ", err)
-	return "", errors.New("cannot extrapolate string")
+	return "", errors.New("cannot interpolate string")
 }
 
 // ContextKey is the type of key that will be used to index into context.
