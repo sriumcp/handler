@@ -73,7 +73,7 @@ func TestGetExperimentFromContext(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestExtrapolate(t *testing.T) {
+func TestInterpolate(t *testing.T) {
 	var err error
 	var exp *Experiment
 	var b string
@@ -83,21 +83,21 @@ func TestExtrapolate(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "default", b)
 
-	args, err := exp.Extrapolate(nil)
+	args, err := exp.Interpolate(nil)
 	assert.Empty(t, args)
 	assert.NoError(t, err)
 
-	args, err = exp.Extrapolate([]string{"hello-world", "hello {{ .revision }} world", "hello {{ .omg }} world"})
+	args, err = exp.Interpolate([]string{"hello-world", "hello {{ .revision }} world", "hello {{ .omg }} world"})
 	assert.Equal(t, []string{"hello-world", "hello revision1 world", "hello  world"}, args)
 	assert.NoError(t, err)
 
-	args, err = exp.Extrapolate([]string{"hello-world", "hello {{ .revision }} world", "hello {{ range .ForEver .omg }} world"})
+	args, err = exp.Interpolate([]string{"hello-world", "hello {{ .revision }} world", "hello {{ range .ForEver .omg }} world"})
 	assert.Error(t, err)
 }
 
-// func TestExtrapolateWithoutHandlerStanza(t *testing.T) {
+// func TestInterpolateWithoutHandlerStanza(t *testing.T) {
 // 	var e *Experiment = &Experiment{}
-// 	assert.NoError(t, e.extrapolate())
+// 	assert.NoError(t, e.interpolate())
 
 // 	_, err := e.GetAction("start")
 // 	assert.Error(t, err)
@@ -107,17 +107,17 @@ func TestExtrapolate(t *testing.T) {
 // 	assert.Error(t, err)
 // }
 
-// func TestExtrapolateWithoutRecommendedBaseline(t *testing.T) {
+// func TestInterpolateWithoutRecommendedBaseline(t *testing.T) {
 // 	var e *Experiment = &Experiment{
 // 		Experiment: *iter8.NewExperiment("default", "default").Build(),
 // 	}
 // 	e.Spec.Strategy.Handlers = &Handlers{
 // 		Actions: &ActionMap{},
 // 	}
-// 	assert.Error(t, e.extrapolate())
+// 	assert.Error(t, e.interpolate())
 // }
 
-// func TestExtrapolateWithoutVersionTags(t *testing.T) {
+// func TestInterpolateWithoutVersionTags(t *testing.T) {
 // 	var iter8Experiment = *iter8.NewExperiment("some", "exp").Build()
 // 	spec := Spec{}
 // 	spec.VersionInfo = &iter8.VersionInfo{
@@ -144,7 +144,7 @@ func TestExtrapolate(t *testing.T) {
 // 	e.Spec.Strategy.Handlers = &Handlers{
 // 		Actions: &ActionMap{},
 // 	}
-// 	assert.NoError(t, e.extrapolate())
+// 	assert.NoError(t, e.interpolate())
 // }
 
 // func TestGetVersionInfo(t *testing.T) {
@@ -176,7 +176,7 @@ func TestExtrapolate(t *testing.T) {
 // 	e.Spec.Strategy.Handlers = &Handlers{
 // 		Actions: &ActionMap{},
 // 	}
-// 	assert.NoError(t, e.extrapolate())
+// 	assert.NoError(t, e.interpolate())
 
 // 	_, err = e.getVersionDetail("canary")
 // 	assert.NoError(t, err)
