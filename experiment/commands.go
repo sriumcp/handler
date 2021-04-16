@@ -61,7 +61,7 @@ func UpdateVariable(v *v2alpha2.VersionDetail, name string, value string) error 
 			return nil
 		}
 	}
-	v.Variables = append(v.Variables, v2alpha2.Variable{
+	v.Variables = append(v.Variables, v2alpha2.NamedValue{
 		Name:  name,
 		Value: value,
 	})

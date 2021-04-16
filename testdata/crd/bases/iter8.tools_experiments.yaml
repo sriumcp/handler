@@ -134,10 +134,10 @@ spec:
                       - preferredDirection
                       type: object
                     type: array
-                  support:
-                    description: Support identifies the required degree of support
-                      the analytics must provide before the analytics engine will
-                      assert success for an objective.
+                  strength:
+                    description: Strength identifies the required degree of support
+                      the analytics must provide before it will assert success for
+                      an objective.
                     x-kubernetes-preserve-unknown-fields: true
                 type: object
               duration:
@@ -162,132 +162,6 @@ spec:
                     minimum: 1
                     type: integer
                 type: object
-              metrics:
-                description: Metrics is a list of all the metrics used in the experiment
-                  It is inserted by the controller from the references in spec.criteria
-                  Key is the name as referenced in spec.criteria
-                items:
-                  description: MetricInfo is name/value pair; entry for list of metrics
-                  properties:
-                    metricObj:
-                      description: MetricObj is the referenced metric
-                      properties:
-                        apiVersion:
-                          description: 'APIVersion defines the versioned schema of
-                            this representation of an object. Servers should convert
-                            recognized schemas to the latest internal value, and may
-                            reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-                          type: string
-                        kind:
-                          description: 'Kind is a string value representing the REST
-                            resource this object represents. Servers may infer this
-                            from the endpoint the client submits requests to. Cannot
-                            be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-                          type: string
-                        metadata:
-                          type: object
-                        spec:
-                          description: MetricSpec defines the desired state of Metric
-                          properties:
-                            description:
-                              description: Text description of the metric
-                              type: string
-                            headerTemplates:
-                              description: HeaderTemplates are templates for headers
-                                that should be passed to the metrics backend. Typically
-                                these are authentication headers. Any fields of the
-                                form '$name' are treated as variables whose value
-                                is looked up in the secret referred to by spec.secretRef.
-                                If the secret does not contain the variable as a key,
-                                the full string "$name" is used.
-                              items:
-                                description: NamedValue name/value to be used in constructing
-                                  a REST query to backend metrics server
-                                properties:
-                                  name:
-                                    description: Name of parameter
-                                    type: string
-                                  value:
-                                    description: Value of parameter
-                                    type: string
-                                required:
-                                - name
-                                - value
-                                type: object
-                              type: array
-                            jqExpression:
-                              description: JQExpression defines how the value of the
-                                metric should be extracted from the metric value returned
-                                by a query to the backend metrics server
-                              minLength: 1
-                              type: string
-                            params:
-                              description: Params are key/value pairs used to construct
-                                a REST query to the metrics backend
-                              items:
-                                description: NamedValue name/value to be used in constructing
-                                  a REST query to backend metrics server
-                                properties:
-                                  name:
-                                    description: Name of parameter
-                                    type: string
-                                  value:
-                                    description: Value of parameter
-                                    type: string
-                                required:
-                                - name
-                                - value
-                                type: object
-                              type: array
-                            provider:
-                              description: Provider identifies the metric backend
-                                including its authentication properties and its unmarshaller
-                              minLength: 1
-                              type: string
-                            sampleSize:
-                              description: SampleSize is a reference to a counter
-                                metric resource. It needs to indicte the number of
-                                data points over which this metric is computed.
-                              minLength: 1
-                              type: string
-                            secret:
-                              description: SecretRef the name of a kubernetes Secret
-                                containing authentication details for the metrics
-                                backend
-                              minLength: 1
-                              type: string
-                            type:
-                              default: gauge
-                              description: Type of the metric
-                              enum:
-                              - counter
-                              - gauge
-                              type: string
-                            units:
-                              description: Units used for display only
-                              type: string
-                            urlTemplate:
-                              description: URLTemplate is a template of the url of
-                                metrics backend. Any fields pf the form '$name' are
-                                treated as variables whose value is looked up in the
-                                secret referred to by spec.secretRef. If the secret
-                                does not contain the variable as a key, the full string
-                                "$name" is used.
-                              type: string
-                          required:
-                          - urlTemplate
-                          type: object
-                      type: object
-                      x-kubernetes-embedded-resource: true
-                    name:
-                      description: Name is identifier for metric.  Can be of the form
-                        "name" or "namespace/name"
-                      type: string
-                  required:
-                  - metricObj
-                  - name
-                  type: object
-                type: array
               strategy:
                 description: Strategy identifies the type of experiment and its properties
                 properties:
@@ -327,43 +201,6 @@ spec:
                     - Progressive
                     - BlueGreen
                     type: string
-                  handlers:
-                    description: Handlers define domain specific behavior and are
-                      called at well defined points in the lifecycle of an experiment.
-                      Specifically at the start (start handler), at the end (finish
-                      handler). A special handler can be specified to handle error
-                      cases.
-                    properties:
-                      failure:
-                        description: Failure handler should implement any domain specific
-                          actions that should take place when an experiment fails.
-                        type: string
-                      finish:
-                        description: Finish handler implements any domain specific
-                          actions that should take place at the end of an experiment.
-                          For now, this includes any promotion logic that is needed
-                          for a winning version. In the future, this function might
-                          be migrated into the controller itself.
-                        type: string
-                      loop:
-                        description: Loop handler should implement any domain specific
-                          actions that should take place when an experiment reaches  a
-                          loop boundary.
-                        type: string
-                      rollback:
-                        description: Rollback handler should implement any domain
-                          specific actions that should take place when an objective
-                          is violated. This behavior is specific to the version with
-                          the failing objective
-                        type: string
-                      start:
-                        description: Start handler implmenents any domain specific
-                          set up for an experiment. It should ensure that any needed
-                          resources are available and in an appropriate state. It
-                          must update the spec.versionInfo field of the experiment
-                          resource.
-                        type: string
-                    type: object
                   testingPattern:
                     description: TestingPattern is the testing pattern of an experiment
                     enum:
@@ -579,9 +416,9 @@ spec:
                                     pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                     x-kubernetes-int-or-string: true
                                   sampleSize:
-                                    description: SampleSize is the  size of the sample
+                                    description: SampleSize is the size of the sample
                                       used for computing this metric. This field is
-                                      applicable only to gauge metrics
+                                      applicable only to Gauge metrics
                                     format: int32
                                     minimum: 0
                                     type: integer
@@ -801,6 +638,160 @@ spec:
               message:
                 description: Message specifies message to show in the kubectl printer
                 type: string
+              metrics:
+                description: Metrics is a list of all the metrics used in the experiment
+                  It is inserted by the controller from the references in spec.criteria
+                  Key is the name as referenced in spec.criteria
+                items:
+                  description: MetricInfo is name/value pair; entry for list of metrics
+                  properties:
+                    metricObj:
+                      description: MetricObj is the referenced metric
+                      properties:
+                        apiVersion:
+                          description: 'APIVersion defines the versioned schema of
+                            this representation of an object. Servers should convert
+                            recognized schemas to the latest internal value, and may
+                            reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                          type: string
+                        kind:
+                          description: 'Kind is a string value representing the REST
+                            resource this object represents. Servers may infer this
+                            from the endpoint the client submits requests to. Cannot
+                            be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                          type: string
+                        metadata:
+                          type: object
+                        spec:
+                          description: MetricSpec defines the attributes of the Metric
+                          properties:
+                            authType:
+                              description: AuthType is the type of authentication
+                                used in the HTTP request
+                              enum:
+                              - Basic
+                              - Bearer
+                              - APIKey
+                              type: string
+                            body:
+                              description: Body is the string used to construct the
+                                (json) body of the HTTP request Body may be templated,
+                                in which Iter8 will attempt to substitute placeholders
+                                in the template at query time using version information.
+                                This field is relevant only when Method == POST
+                              type: string
+                            description:
+                              description: Text description of the metric
+                              type: string
+                            headerTemplates:
+                              description: HeaderTemplates are key/value pairs corresponding
+                                to HTTP request headers and their values. Value may
+                                be templated, in which Iter8 will attempt to substitute
+                                placeholders in the template at query time using Secret.
+                                Placeholder substitution will be attempted only when
+                                Secret != nil.
+                              items:
+                                description: NamedValue name/value to be used in constructing
+                                  a REST query to backend metrics server
+                                properties:
+                                  name:
+                                    description: Name of parameter
+                                    type: string
+                                  value:
+                                    description: Value of parameter
+                                    type: string
+                                required:
+                                - name
+                                - value
+                                type: object
+                              type: array
+                            jqExpression:
+                              description: JQExpression defines the jq expression
+                                used by Iter8 to extract the metric value from the
+                                (JSON) response returned by the HTTP URL queried by
+                                Iter8. An empty string is a valid jq expression.
+                              type: string
+                            method:
+                              default: GET
+                              description: Method is the HTTP method used in the HTTP
+                                request
+                              enum:
+                              - GET
+                              - POST
+                              type: string
+                            params:
+                              description: Params are key/value pairs corresponding
+                                to HTTP request parameters Value may be templated,
+                                in which Iter8 will attempt to substitute placeholders
+                                in the template at query time using version information.
+                              items:
+                                description: NamedValue name/value to be used in constructing
+                                  a REST query to backend metrics server
+                                properties:
+                                  name:
+                                    description: Name of parameter
+                                    type: string
+                                  value:
+                                    description: Value of parameter
+                                    type: string
+                                required:
+                                - name
+                                - value
+                                type: object
+                              type: array
+                            provider:
+                              description: Provider identifies the type of metric
+                                database. Used for informational purposes.
+                              type: string
+                            sampleSize:
+                              description: SampleSize is a reference to a counter
+                                metric resource. The value of the SampleSize metric
+                                denotes the number of data points over which this
+                                metric is computed. This field is relevant only when
+                                Type == Gauge
+                              type: string
+                            secret:
+                              description: Secret is a reference to the Kubernetes
+                                secret. Secret contains data used for HTTP authentication.
+                                Secret may also contain data used for placeholder
+                                substitution in HeaderTemplates and URLTemplate.
+                              type: string
+                            type:
+                              default: Gauge
+                              description: Type of the metric
+                              enum:
+                              - Counter
+                              - Gauge
+                              type: string
+                            units:
+                              description: Units of the metric. Used for informational
+                                purposes.
+                              type: string
+                            urlTemplate:
+                              description: URLTemplate is a template for the URL queried
+                                during the HTTP request. Typically, URLTemplate is
+                                expected to be the actual URL without any placeholders.
+                                However, as indicated by its name, URLTemplate may
+                                be templated. In this case, Iter8 will attempt to
+                                substitute placeholders in the URLTemplate at query
+                                time using Secret. Placeholder substitution will be
+                                attempted only when Secret != nil.
+                              type: string
+                          required:
+                          - jqExpression
+                          - urlTemplate
+                          type: object
+                      type: object
+                      x-kubernetes-embedded-resource: true
+                    name:
+                      description: Name is identifier for metric.  Can be of the form
+                        "name" or "namespace/name"
+                      type: string
+                  required:
+                  - metricObj
+                  - name
+                  type: object
+                type: array
               stage:
                 description: Stage indicates where the experiment is in its process
                   of execution
