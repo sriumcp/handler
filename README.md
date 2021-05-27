@@ -2,7 +2,9 @@
 [![Coverage](https://codecov.io/gh/iter8-tools/handler/branch/main/graphs/badge.svg?branch=main)](https://codecov.io/gh/iter8-tools/handler)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Go Reference](https://pkg.go.dev/badge/github.com/iter8-tools/handler.svg)](https://pkg.go.dev/github.com/iter8-tools/handler)
-# handler
-> Handler logic and Docker image for use in iter8 domain packages and experiments.
 
-Iter8's handler enables start up and completion of experiments. For details on how handler is invoked during experiments, please see [here](https://github.com/iter8-tools/iter8-kfserving/wiki/Under-the-Hood).
+# handler
+
+> This repo enables Iter8 tasks, an extension mechanism for enhancing the behavior of Iter8 experiments. This repo provides Iter8 task implementations and the container image used for running these tasks during an experiment.
+
+For Iter8 project documentation, please visit [https://iter8.tools](https://iter8.tools).
