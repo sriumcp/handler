@@ -379,5 +379,16 @@ func (t *CollectTask) Run(ctx context.Context) error {
 		return err
 	}
 	exp.SetAggregatedBuiltinHists(v1.JSON{Raw: bytes})
-	return experiment.UpdateInClusterExperimentStatus(exp)
+
+	bytes1, _ := json.MarshalIndent(exp, "", "  ")
+	log.Trace("Experiment with updated status... before the update call")
+	log.Trace(bytes1)
+
+	err = experiment.UpdateInClusterExperimentStatus(exp)
+
+	bytes2, _ := json.MarshalIndent(exp, "", "  ")
+	log.Trace("Experiment with updated status... after the update call")
+	log.Trace(bytes2)
+
+	return err
 }
