@@ -382,13 +382,13 @@ func (t *CollectTask) Run(ctx context.Context) error {
 
 	bytes1, _ := json.MarshalIndent(exp, "", "  ")
 	log.Trace("Experiment with updated status... before the update call")
-	log.Trace(bytes1)
+	log.Trace(string(bytes1))
 
 	err = experiment.UpdateInClusterExperimentStatus(exp)
 
 	bytes2, _ := json.MarshalIndent(exp, "", "  ")
 	log.Trace("Experiment with updated status... after the update call")
-	log.Trace(bytes2)
+	log.Trace(string(bytes2))
 
 	return err
 }
