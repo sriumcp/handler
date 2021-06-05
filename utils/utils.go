@@ -29,6 +29,9 @@ func GetLogger() *logrus.Logger {
 	if log == nil {
 		log = logrus.New()
 		log.SetLevel(logLevel)
+		log.SetFormatter(&logrus.TextFormatter{
+			DisableQuote: true,
+		})
 	}
 	return log
 }

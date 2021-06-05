@@ -23,6 +23,7 @@ import (
 	"github.com/iter8-tools/handler/base"
 	"github.com/iter8-tools/handler/experiment"
 	"github.com/iter8-tools/handler/utils"
+	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
@@ -75,15 +76,19 @@ func MakeCollect(t *v2alpha2.TaskSpec) (base.Task, error) {
 	}
 	var err error
 	var jsonBytes []byte
-	var ct base.Task
+	var bt base.Task
 	// convert t to jsonBytes
 	jsonBytes, err = json.Marshal(t)
 	// convert jsonString to CollectTask
 	if err == nil {
-		ct = &CollectTask{}
+		ct := &CollectTask{}
 		err = json.Unmarshal(jsonBytes, &ct)
+		if ct.With.Versions == nil {
+			return nil, errors.New("Collect task with nil versions")
+		}
+		bt = ct
 	}
-	return ct, err
+	return bt, err
 }
 
 // InitializeDefaults sets default values for time duration and QPS for Fortio run
@@ -201,7 +206,6 @@ func payloadFile(url string) (string, error) {
 		log.Error("Error while getting JSON bytes: ", err)
 		return "", err
 	}
-	log.Trace("Got json bytes")
 
 	tmpfile, err := ioutil.TempFile("/tmp", "payload.json")
 	if err != nil {
@@ -223,7 +227,7 @@ func payloadFile(url string) (string, error) {
 }
 
 // resultForVersion collects Fortio result for a given version
-func (t *CollectTask) resultForVersion(j int, pf string) (*Result, error) {
+func (t *CollectTask) resultForVersion(entry *logrus.Entry, j int, pf string) (*Result, error) {
 	// the main idea is to run Fortio shell command with proper args
 	// collect Fortio output as a file
 	// and extract the result from the file, and return the result
@@ -247,7 +251,7 @@ func (t *CollectTask) resultForVersion(j int, pf string) (*Result, error) {
 	// create json output file; and Fortio append json flag
 	jsonOutputFile, err := ioutil.TempFile("/tmp", "output.json.")
 	if err != nil {
-		log.Fatal(err)
+		entry.Fatal(err)
 		return nil, err
 	}
 	args = append(args, "-json", jsonOutputFile.Name())
@@ -260,25 +264,22 @@ func (t *CollectTask) resultForVersion(j int, pf string) (*Result, error) {
 	cmd := exec.Command("fortio", args...)
 	cmd.Stdout = &execOut
 	cmd.Stderr = os.Stderr
-	log.Trace("Invoking: " + cmd.String())
+	entry.Trace("Invoking: " + cmd.String())
 
 	// execute Fortio command
 	err = cmd.Run()
 	if err != nil {
-		log.Fatal(err)
+		entry.Fatal(err)
 		return nil, err
 	}
 
 	// extract result from Fortio json output file
 	ifr, err := getResultFromFile(jsonOutputFile.Name())
-	log.Info("Got result from file")
-	log.Info(ifr)
 	if err != nil {
-		log.Fatal(err)
+		entry.Fatal(err)
 		return nil, err
 	}
 
-	log.Trace(ifr)
 	return ifr, err
 }
 
@@ -332,14 +333,14 @@ func (t *CollectTask) Run(ctx context.Context) error {
 	for j := range t.With.Versions {
 		// Increment the WaitGroup counter.
 		wg.Add(1)
+		// get log entry
+		entry := log.WithField("version", t.With.Versions[j].Name)
 		// Launch a goroutine to fetch the Fortio data for this version.
-		go func(k int) {
+		go func(entry *logrus.Entry, k int) {
 			// Decrement the counter when the goroutine completes.
 			defer wg.Done()
 			// Get Fortio data for version
-			data, err := t.resultForVersion(k, tmpfileName)
-			log.Info("Result for version: " + t.With.Versions[k].Name)
-			log.Info(data)
+			data, err := t.resultForVersion(entry, k, tmpfileName)
 			if err == nil {
 				// Update fortioData in a threadsafe manner
 				lock.Lock()
@@ -350,7 +351,7 @@ func (t *CollectTask) Run(ctx context.Context) error {
 				// this helps metrics/collect task exit immediately upon error
 				errCh <- err
 			}
-		}(j)
+		}(entry, j)
 		// never use loop variable directly within the inner go routine as it will get overwritten in loop iterations
 		// go func is invoked with its arg k set to the value of j
 		// eliminating 'k' and simply plugging 'j' in t.With.Versions[k].Name above will not work, and will result in the ultra helpful linter warning
@@ -374,21 +375,21 @@ func (t *CollectTask) Run(ctx context.Context) error {
 	// Update experiment status with results
 	// update to experiment status will result in reconcile request to etc3
 	// unless the task runner job executing this action is completed, this request will not have have an immediate effect in the experiment reconcilation process
-	bytes, err := json.Marshal(fortioData)
+
+	bytes1, err := json.Marshal(fortioData)
 	if err != nil {
 		return err
 	}
-	exp.SetAggregatedBuiltinHists(v1.JSON{Raw: bytes})
 
-	bytes1, _ := json.MarshalIndent(exp, "", "  ")
-	log.Trace("Experiment with updated status... before the update call")
-	log.Trace(string(bytes1))
+	exp.SetAggregatedBuiltinHists(v1.JSON{Raw: bytes1})
 
 	err = experiment.UpdateInClusterExperimentStatus(exp)
 
-	bytes2, _ := json.MarshalIndent(exp, "", "  ")
-	log.Trace("Experiment with updated status... after the update call")
-	log.Trace(string(bytes2))
+	var prettyBody bytes.Buffer
+	bytes2, err := json.Marshal(exp)
+
+	json.Indent(&prettyBody, bytes2, "", "  ")
+	log.Trace(string(prettyBody.Bytes()))
 
 	return err
 }
