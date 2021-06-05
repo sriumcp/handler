@@ -119,7 +119,8 @@ func TestResultForVersionresultForVersion(t *testing.T) {
 		},
 	}
 	ct.InitializeDefaults()
-	res, err := ct.resultForVersion(0, "")
+	entry := log.WithField("version", "default")
+	res, err := ct.resultForVersion(entry, 0, "")
 	assert.NoError(t, err)
 	assert.NotNil(t, res)
 }
