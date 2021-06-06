@@ -60,6 +60,8 @@ type CollectInputs struct {
 	Versions []Version `json:"versions" yaml:"versions"`
 	// URL of the JSON file to send during the query; optional
 	PayloadURL *string `json:"payloadURL,omitempty" yaml:"payloadURL,omitempty"`
+	// if LoadOnly is set to true, this task will send requests without collecting metrics; optional
+	LoadOnly *bool `json:"loadOnly,omitempty" yaml:"loadOnly,omitempty"`
 }
 
 // CollectTask enables collection of Iter8's built-in metrics.
@@ -299,14 +301,18 @@ func (t *CollectTask) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if exp.Status.Analysis != nil && exp.Status.Analysis.AggregatedBuiltinHists != nil {
-		jsonBytes, err := json.Marshal(exp.Status.Analysis.AggregatedBuiltinHists.Data)
-		// convert jsonBytes to fortioData
-		if err == nil {
-			err = json.Unmarshal(jsonBytes, &fortioData)
-		}
-		if err != nil {
-			return err
+	// if this task is **not** loadOnly
+	if t.With.LoadOnly == nil || *t.With.LoadOnly == false {
+		// bootstrap AggregatedBuiltinHists with data already present in experiment status
+		if exp.Status.Analysis != nil && exp.Status.Analysis.AggregatedBuiltinHists != nil {
+			jsonBytes, err := json.Marshal(exp.Status.Analysis.AggregatedBuiltinHists.Data)
+			// convert jsonBytes to fortioData
+			if err == nil {
+				err = json.Unmarshal(jsonBytes, &fortioData)
+			}
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -342,10 +348,13 @@ func (t *CollectTask) Run(ctx context.Context) error {
 			// Get Fortio data for version
 			data, err := t.resultForVersion(entry, k, tmpfileName)
 			if err == nil {
-				// Update fortioData in a threadsafe manner
-				lock.Lock()
-				fortioData = aggregate(fortioData, t.With.Versions[k].Name, data)
-				lock.Unlock()
+				// if this task is **not** loadOnly
+				if t.With.LoadOnly == nil || *t.With.LoadOnly == false {
+					// Update fortioData in a threadsafe manner
+					lock.Lock()
+					fortioData = aggregate(fortioData, t.With.Versions[k].Name, data)
+					lock.Unlock()
+				}
 			} else {
 				// if any error occured in this go routine, send it through the error channel
 				// this helps metrics/collect task exit immediately upon error
@@ -372,24 +381,27 @@ func (t *CollectTask) Run(ctx context.Context) error {
 	}
 	log.Trace("Wait group finished normally")
 
-	// Update experiment status with results
-	// update to experiment status will result in reconcile request to etc3
-	// unless the task runner job executing this action is completed, this request will not have have an immediate effect in the experiment reconcilation process
+	// if this task is **not** loadOnly
+	if t.With.LoadOnly == nil || *t.With.LoadOnly == false {
+		// Update experiment status with results
+		// update to experiment status will result in reconcile request to etc3
+		// unless the task runner job executing this action is completed, this request will not have have an immediate effect in the experiment reconcilation process
 
-	bytes1, err := json.Marshal(fortioData)
-	if err != nil {
-		return err
+		bytes1, err := json.Marshal(fortioData)
+		if err != nil {
+			return err
+		}
+
+		exp.SetAggregatedBuiltinHists(v1.JSON{Raw: bytes1})
+
+		err = experiment.UpdateInClusterExperimentStatus(exp)
+
+		var prettyBody bytes.Buffer
+		bytes2, err := json.Marshal(exp)
+
+		json.Indent(&prettyBody, bytes2, "", "  ")
+		log.Trace(string(prettyBody.Bytes()))
 	}
-
-	exp.SetAggregatedBuiltinHists(v1.JSON{Raw: bytes1})
-
-	err = experiment.UpdateInClusterExperimentStatus(exp)
-
-	var prettyBody bytes.Buffer
-	bytes2, err := json.Marshal(exp)
-
-	json.Indent(&prettyBody, bytes2, "", "  ")
-	log.Trace(string(prettyBody.Bytes()))
 
 	return err
 }
