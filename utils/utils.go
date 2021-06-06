@@ -59,6 +59,11 @@ func StringPointer(s string) *string {
 	return &s
 }
 
+// BoolPointer takes a bool as input, creates a new variable with the input value, and returns a pointer to the variable
+func BoolPointer(b bool) *bool {
+	return &b
+}
+
 // HTTPMethod is either GET or POST
 type HTTPMethod string
 

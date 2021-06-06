@@ -107,7 +107,7 @@ func TestPayloadFile(t *testing.T) {
 	assert.Empty(t, fileName)
 }
 
-func TestResultForVersionresultForVersion(t *testing.T) {
+func TestResultForVersion(t *testing.T) {
 	ct := CollectTask{
 		Library: "metrics",
 		Task:    "collect",
