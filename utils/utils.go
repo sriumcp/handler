@@ -29,6 +29,9 @@ func GetLogger() *logrus.Logger {
 	if log == nil {
 		log = logrus.New()
 		log.SetLevel(logLevel)
+		log.SetFormatter(&logrus.TextFormatter{
+			DisableQuote: true,
+		})
 	}
 	return log
 }
@@ -54,6 +57,11 @@ func Float64Pointer(f float64) *float64 {
 // StringPointer takes a string as input, creates a new variable with the input value, and returns a pointer to the variable
 func StringPointer(s string) *string {
 	return &s
+}
+
+// BoolPointer takes a bool as input, creates a new variable with the input value, and returns a pointer to the variable
+func BoolPointer(b bool) *bool {
+	return &b
 }
 
 // HTTPMethod is either GET or POST

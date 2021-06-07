@@ -107,7 +107,7 @@ func TestPayloadFile(t *testing.T) {
 	assert.Empty(t, fileName)
 }
 
-func TestResultForVersionresultForVersion(t *testing.T) {
+func TestResultForVersion(t *testing.T) {
 	ct := CollectTask{
 		Library: "metrics",
 		Task:    "collect",
@@ -119,7 +119,8 @@ func TestResultForVersionresultForVersion(t *testing.T) {
 		},
 	}
 	ct.InitializeDefaults()
-	res, err := ct.resultForVersion(0, "")
+	entry := log.WithField("version", "default")
+	res, err := ct.resultForVersion(entry, 0, "")
 	assert.NoError(t, err)
 	assert.NotNil(t, res)
 }
