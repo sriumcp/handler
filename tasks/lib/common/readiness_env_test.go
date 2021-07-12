@@ -2,17 +2,13 @@ package common
 
 import (
 	"context"
-	"io/ioutil"
 	"strings"
 
-	"github.com/ghodss/yaml"
 	"github.com/iter8-tools/etc3/api/v2alpha2"
 	"github.com/iter8-tools/handler/tasks"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -37,17 +33,10 @@ var _ = Describe("Readiness task", func() {
 		var exp *tasks.Experiment
 		var err error
 
-		u1 := &unstructured.Unstructured{}
-		u1.SetGroupVersionKind(schema.GroupVersionKind{
-			Group:   "apps",
-			Kind:    "Deployment",
-			Version: "v1",
-		})
-		u2 := &unstructured.Unstructured{}
-		u2.SetGroupVersionKind(v2alpha2.GroupVersion.WithKind("experiment"))
+		u := &unstructured.Unstructured{}
+		u.SetGroupVersionKind(v2alpha2.GroupVersion.WithKind("experiment"))
 		BeforeEach(func() {
-			k8sClient.DeleteAllOf(context.Background(), u1, client.InNamespace("default"))
-			k8sClient.DeleteAllOf(context.Background(), u2, client.InNamespace("default"))
+			k8sClient.DeleteAllOf(context.Background(), u, client.InNamespace("default"))
 		})
 
 		It("should initialize a conformance experiment", func() {
@@ -57,16 +46,6 @@ var _ = Describe("Readiness task", func() {
 
 			By("creating experiment in cluster")
 			Expect(k8sClient.Create(context.Background(), exp)).To(Succeed())
-
-			By("reading deployment from file")
-			helloDeploy := &appsv1.Deployment{}
-			data, err := ioutil.ReadFile(tasks.CompletePath("../../../", "testdata/common/hellodeploy.yaml"))
-			Expect(err).ToNot(HaveOccurred())
-			err = yaml.Unmarshal(data, helloDeploy)
-			Expect(err).ToNot(HaveOccurred())
-
-			By("creating the deployment in the cluster")
-			Expect(k8sClient.Create(context.Background(), helloDeploy, &client.CreateOptions{})).To(Succeed())
 
 			By("getting the experiment from the cluster")
 			exp2 := &tasks.Experiment{}
