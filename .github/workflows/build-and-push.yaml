@@ -41,7 +41,7 @@ jobs:
         sudo mv /tmp/kubebuilder_2.3.1_${os}_${arch} /usr/local/kubebuilder
         export PATH=$PATH:/usr/local/kubebuilder/bin
     - name: Get Fortio
-      run: go get fortio.org/fortio
+      run: go get fortio.org/fortio@v1.17.0
     - name: Test
       run: | 
         export PATH=$PATH:$(go env GOPATH)
@@ -96,7 +96,7 @@ jobs:
         sudo mv /tmp/kubebuilder_2.3.1_${os}_${arch} /usr/local/kubebuilder
         export PATH=$PATH:/usr/local/kubebuilder/bin
     - name: Get Fortio
-      run: go get fortio.org/fortio
+      run: go get fortio.org/fortio@v1.17.0
     - name: Test With Coverage
       run: go test -gcflags=-l -v  -coverprofile=coverage.txt -covermode=atomic ./...
     - name: Upload coverage to Codecov
