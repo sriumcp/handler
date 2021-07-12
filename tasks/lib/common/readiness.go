@@ -30,6 +30,8 @@ var dnsLabelRegexp = regexp.MustCompile("^" + dnsLabelFmt + "$")
 
 // IsDNSLabel tests for a string that conforms to the definition of a label in
 // DNS (RFC 1035/1123).
+// The following function is implemented in (very) old versions of k8s util package.
+// This function doesn't seem to exist in newer versions, so reimplemented here.
 func IsDNSLabel(value string) bool {
 	return len(value) <= dnsLabelMaxLength && dnsLabelRegexp.MatchString(value)
 }
