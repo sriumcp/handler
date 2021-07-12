@@ -86,6 +86,17 @@ func MakeReadinessTask(t *v2alpha2.TaskSpec) (tasks.Task, error) {
 	return task, err
 }
 
+// command interface is useful for mocking shell commands
+type command interface {
+	Run() error
+	String() string
+}
+
+// getCommand returns an instance of the command interface
+var getCommand = func(name string, arg ...string) command {
+	return exec.Command(name, arg...)
+}
+
 // Check existence and readiness of K8s objects.
 func (t *ReadinessTask) Run(ctx context.Context) error {
 	exp, err := tasks.GetExperimentFromContext(ctx)
@@ -93,7 +104,7 @@ func (t *ReadinessTask) Run(ctx context.Context) error {
 		log.Error(err)
 		return err
 	}
-	log.Trace("experiment", exp)
+	log.Info("experiment", exp)
 
 	// add versioninfo objects to task
 	// for baseline
@@ -120,6 +131,8 @@ func (t *ReadinessTask) Run(ctx context.Context) error {
 		}
 	}
 
+	log.Info("The task...")
+	log.Info(t)
 	time.Sleep(time.Duration(*t.With.InitialDelaySeconds) * time.Second)
 	// invariant: objIndex is the number of objects that have been checked and found to be good
 	objIndex := 0
@@ -136,18 +149,28 @@ func (t *ReadinessTask) Run(ctx context.Context) error {
 			}
 			// check existence
 			script := fmt.Sprintf("kubectl get %s %s -n %s", t.With.ObjRefs[i].Kind, t.With.ObjRefs[i].Name, namespace)
-			cmd := exec.Command("/bin/bash", "-c", script)
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
+			cmd := getCommand("/bin/bash", "-c", script)
+
+			_, ok := cmd.(*exec.Cmd)
+			if ok {
+				cmd.(*exec.Cmd).Stdout = os.Stdout
+				cmd.(*exec.Cmd).Stderr = os.Stderr
+			}
+
 			log.Info("Executing command: " + cmd.String())
 			err = cmd.Run()
 			if err == nil {
 				// check readiness condition if any
 				if t.With.ObjRefs[i].WaitFor != nil {
 					script := fmt.Sprintf("kubectl wait %s/%s -n %s --for=%s --timeout=0s", t.With.ObjRefs[i].Kind, t.With.ObjRefs[i].Name, namespace, *t.With.ObjRefs[i].WaitFor)
-					cmd := exec.Command("/bin/bash", "-c", script)
-					cmd.Stdout = os.Stdout
-					cmd.Stderr = os.Stderr
+					cmd := getCommand("/bin/bash", "-c", script)
+
+					_, ok := cmd.(*exec.Cmd)
+					if ok {
+						cmd.(*exec.Cmd).Stdout = os.Stdout
+						cmd.(*exec.Cmd).Stderr = os.Stderr
+					}
+
 					log.Info("Executing command: " + cmd.String())
 					err = cmd.Run()
 				}
