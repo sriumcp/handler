@@ -110,3 +110,38 @@ func TestMakePromoteKubectlTask(t *testing.T) {
 	bTask := *task.(*PromoteKubectlTask).ToBashTask()
 	assert.Equal(t, "kubectl apply --namespace default --recursive --filename promote.yaml", bTask.With.Script)
 }
+
+func TestMakeReadinessTask(t *testing.T) {
+	initDelay, _ := json.Marshal(5)
+	numRetries, _ := json.Marshal(3)
+	intervalSeconds, _ := json.Marshal(5)
+	objRefs, _ := json.Marshal([]ObjRef{
+		{
+			Kind:      "deploy",
+			Namespace: utils.StringPointer("default"),
+			Name:      "hello",
+			WaitFor:   utils.StringPointer("condition=available"),
+		},
+		{
+			Kind:      "deploy",
+			Namespace: utils.StringPointer("default"),
+			Name:      "hello-candidate",
+			WaitFor:   utils.StringPointer("condition=available"),
+		},
+	})
+	task, err := MakeTask(&v2alpha2.TaskSpec{
+		Task: LibraryName + "/" + ReadinessTaskName,
+		With: map[string]apiextensionsv1.JSON{
+			"initialDelaySeconds": {Raw: initDelay},
+			"numRetries":          {Raw: numRetries},
+			"intervalSeconds":     {Raw: intervalSeconds},
+			"objRefs":             {Raw: objRefs},
+		},
+	})
+	assert.NotEmpty(t, task)
+	assert.NoError(t, err)
+	assert.Equal(t, 5, *task.(*ReadinessTask).With.InitialDelaySeconds)
+	assert.Equal(t, 3, *task.(*ReadinessTask).With.NumRetries)
+	assert.Equal(t, 5, *task.(*ReadinessTask).With.IntervalSeconds)
+	assert.Equal(t, 2, len(task.(*ReadinessTask).With.ObjRefs))
+}
