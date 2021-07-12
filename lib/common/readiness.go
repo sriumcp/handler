@@ -38,8 +38,8 @@ type ObjRef struct {
 // optional readiness conditions for them. The inputs also specify the delays
 // and retries involved in the existence and readiness checks.
 type ReadinessInputs struct {
-	// InitialDelay is optional and defaulted to 5 secs. The first check will be performed after this delay.
-	InitialDelay *int32 `json:"initialDelay" yaml:"initialDelay"`
+	// InitialDelaySeconds is optional and defaulted to 5 secs. The first check will be performed after this delay.
+	InitialDelaySeconds *int32 `json:"initialDelaySeconds" yaml:"initialDelaySeconds"`
 	// NumRetries is optional and defaulted to 12. This is the number of retries that will be attempted after the first check. Total number of trials = 1 + NumRetries.
 	NumRetries *int32 `json:"numRetries" yaml:"numRetries"`
 	// IntervalSeconds is optional and defaulted to 5 secs
@@ -73,8 +73,8 @@ func MakeReadinessTask(t *v2alpha2.TaskSpec) (base.Task, error) {
 		return nil, err
 	}
 	// set defaults
-	if task.With.InitialDelay == nil {
-		task.With.InitialDelay = utils.Int32Pointer(5)
+	if task.With.InitialDelaySeconds == nil {
+		task.With.InitialDelaySeconds = utils.Int32Pointer(5)
 	}
 	if task.With.NumRetries == nil {
 		task.With.NumRetries = utils.Int32Pointer(12)
@@ -94,7 +94,7 @@ func (t *ReadinessTask) Run(ctx context.Context) error {
 	}
 	log.Trace("experiment", exp)
 
-	time.Sleep(time.Duration(*t.With.InitialDelay) * time.Second)
+	time.Sleep(time.Duration(*t.With.InitialDelaySeconds) * time.Second)
 	// invariant: objIndex is the number of objects that have been checked and found to be good
 	objIndex := 0
 	for i := 0; i <= int(*t.With.NumRetries); i++ {
