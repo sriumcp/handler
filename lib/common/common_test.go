@@ -140,8 +140,8 @@ func TestMakeReadinessTask(t *testing.T) {
 	})
 	assert.NotEmpty(t, task)
 	assert.NoError(t, err)
-	assert.Equal(t, 5, *task.(*ReadinessTask).With.InitialDelaySeconds)
-	assert.Equal(t, 3, *task.(*ReadinessTask).With.NumRetries)
-	assert.Equal(t, 5, *task.(*ReadinessTask).With.IntervalSeconds)
+	assert.Equal(t, int32(5), *task.(*ReadinessTask).With.InitialDelaySeconds)
+	assert.Equal(t, int32(3), *task.(*ReadinessTask).With.NumRetries)
+	assert.Equal(t, int32(5), *task.(*ReadinessTask).With.IntervalSeconds)
 	assert.Equal(t, 2, len(task.(*ReadinessTask).With.ObjRefs))
 }
