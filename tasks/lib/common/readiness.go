@@ -35,6 +35,8 @@ type ObjRef struct {
 // ReadinessInputs contains a list of K8s object references along with
 // optional readiness conditions for them. The inputs also specify the delays
 // and retries involved in the existence and readiness checks.
+// This task will also check for existence of objects specified
+// in the VersionInfo field of the experiment.
 type ReadinessInputs struct {
 	// InitialDelaySeconds is optional and defaulted to 5 secs. The first check will be performed after this delay.
 	InitialDelaySeconds *int32 `json:"initialDelaySeconds" yaml:"initialDelaySeconds"`
@@ -80,6 +82,7 @@ func MakeReadinessTask(t *v2alpha2.TaskSpec) (tasks.Task, error) {
 	if task.With.IntervalSeconds == nil {
 		task.With.IntervalSeconds = tasks.Int32Pointer(5)
 	}
+
 	return task, err
 }
 
@@ -91,6 +94,31 @@ func (t *ReadinessTask) Run(ctx context.Context) error {
 		return err
 	}
 	log.Trace("experiment", exp)
+
+	// add versioninfo objects to task
+	// for baseline
+	if exp.Spec.VersionInfo != nil {
+		if exp.Spec.VersionInfo.Baseline.WeightObjRef != nil {
+			objRef := ObjRef{
+				Kind:      exp.Spec.VersionInfo.Baseline.WeightObjRef.Kind,
+				Namespace: &exp.Spec.VersionInfo.Baseline.WeightObjRef.Namespace,
+				Name:      exp.Spec.VersionInfo.Baseline.WeightObjRef.Name,
+			}
+			t.With.ObjRefs = append(t.With.ObjRefs, objRef)
+		}
+
+		// for each candidate
+		for _, c := range exp.Spec.VersionInfo.Candidates {
+			if c.WeightObjRef != nil {
+				objRef := ObjRef{
+					Kind:      c.WeightObjRef.Kind,
+					Namespace: &c.WeightObjRef.Namespace,
+					Name:      c.WeightObjRef.Name,
+				}
+				t.With.ObjRefs = append(t.With.ObjRefs, objRef)
+			}
+		}
+	}
 
 	time.Sleep(time.Duration(*t.With.InitialDelaySeconds) * time.Second)
 	// invariant: objIndex is the number of objects that have been checked and found to be good
