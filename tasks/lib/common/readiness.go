@@ -23,6 +23,11 @@ const (
 
 	// maximum length of names
 	dnsLabelMaxLength int = 63
+
+	// readiness task default values for params
+	defaultInitialDelaySeconds = 5
+	defaultNumRetries          = 12
+	defaultIntervalSeconds     = 5
 )
 
 // regex object
@@ -40,11 +45,11 @@ func IsDNSLabel(value string) bool {
 type ObjRef struct {
 	// Kind of the object. Specified in the TYPE[.VERSION][.GROUP] format used by `kubectl`
 	// See https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#get
-	Kind string `json:"kind,omitempty" yaml:"kind,omitempty"`
+	Kind string `json:"kind" yaml:"kind"`
 	// Namespace of the object. Optional. If left unspecified, this will be defaulted to the namespace of the experiment
 	Namespace *string `json:"namespace,omitempty" yaml:"namespace,omitempty"`
 	// Name of the object
-	Name string `json:"name,omitempty" yaml:"name,omitempty"`
+	Name string `json:"name" yaml:"name"`
 	// Wait for condition. Optional.
 	// Any value that is accepted by the --for flag of the `kubectl wait` command can be specified.
 	// See https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#wait
@@ -58,14 +63,14 @@ type ObjRef struct {
 // in the VersionInfo field of the experiment.
 type ReadinessInputs struct {
 	// InitialDelaySeconds is optional and defaulted to 5 secs. The first check will be performed after this delay.
-	InitialDelaySeconds *int32 `json:"initialDelaySeconds" yaml:"initialDelaySeconds"`
+	InitialDelaySeconds *int32 `json:"initialDelaySeconds,omitempty" yaml:"initialDelaySeconds,omitempty"`
 	// NumRetries is optional and defaulted to 12. This is the number of retries that will be attempted after the first check. Total number of trials = 1 + NumRetries.
-	NumRetries *int32 `json:"numRetries" yaml:"numRetries"`
+	NumRetries *int32 `json:"numRetries,omitempty" yaml:"numRetries,omitempty"`
 	// IntervalSeconds is optional and defaulted to 5 secs
 	// Retries will be attempted periodically every IntervalSeconds
-	IntervalSeconds *int32 `json:"intervalSeconds" yaml:"intervalSeconds"`
+	IntervalSeconds *int32 `json:"intervalSeconds,omitempty" yaml:"intervalSeconds,omitempty"`
 	// ObjRefs is a list of K8s objects along with optional readiness conditions
-	ObjRefs []ObjRef `json:"objRefs" yaml:"objRefs"`
+	ObjRefs []ObjRef `json:"objRefs,omitempty" yaml:"objRefs,omitempty"`
 }
 
 // ReadinessTask checks existence and readiness of specified resources
@@ -93,13 +98,13 @@ func MakeReadinessTask(t *v2alpha2.TaskSpec) (tasks.Task, error) {
 	}
 	// set defaults
 	if task.With.InitialDelaySeconds == nil {
-		task.With.InitialDelaySeconds = tasks.Int32Pointer(5)
+		task.With.InitialDelaySeconds = tasks.Int32Pointer(defaultInitialDelaySeconds)
 	}
 	if task.With.NumRetries == nil {
-		task.With.NumRetries = tasks.Int32Pointer(12)
+		task.With.NumRetries = tasks.Int32Pointer(defaultNumRetries)
 	}
 	if task.With.IntervalSeconds == nil {
-		task.With.IntervalSeconds = tasks.Int32Pointer(5)
+		task.With.IntervalSeconds = tasks.Int32Pointer(defaultIntervalSeconds)
 	}
 
 	// validate
