@@ -3,9 +3,11 @@ package common
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"time"
 
 	"github.com/iter8-tools/etc3/api/v2alpha2"
@@ -15,7 +17,22 @@ import (
 const (
 	// ReadinessTaskName is the name of the readiness task
 	ReadinessTaskName string = "readiness"
+
+	// regex for resource names
+	dnsLabelFmt string = "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+
+	// maximum length of names
+	dnsLabelMaxLength int = 63
 )
+
+// regex object
+var dnsLabelRegexp = regexp.MustCompile("^" + dnsLabelFmt + "$")
+
+// IsDNSLabel tests for a string that conforms to the definition of a label in
+// DNS (RFC 1035/1123).
+func IsDNSLabel(value string) bool {
+	return len(value) <= dnsLabelMaxLength && dnsLabelRegexp.MatchString(value)
+}
 
 // ObjRef contains details about a specific K8s object whose existence and readiness will be checked
 type ObjRef struct {
@@ -81,6 +98,14 @@ func MakeReadinessTask(t *v2alpha2.TaskSpec) (tasks.Task, error) {
 	}
 	if task.With.IntervalSeconds == nil {
 		task.With.IntervalSeconds = tasks.Int32Pointer(5)
+	}
+
+	// validate
+	for _, o := range task.With.ObjRefs {
+		if !IsDNSLabel(o.Name) {
+			err = errors.New("Object name is malformatted; needs to be a valid DNS label")
+			break
+		}
 	}
 
 	return task, err
