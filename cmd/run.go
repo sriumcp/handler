@@ -9,7 +9,6 @@ import (
 	"github.com/iter8-tools/etc3/api/v2alpha2"
 	"github.com/iter8-tools/handler/tasks"
 	"github.com/iter8-tools/handler/tasks/lib/common"
-	"github.com/iter8-tools/handler/tasks/lib/knative"
 	"github.com/iter8-tools/handler/tasks/lib/metrics"
 	"github.com/iter8-tools/handler/tasks/lib/notification"
 	"github.com/spf13/cobra"
@@ -41,10 +40,6 @@ Loop:
 			switch actionSpecSubstr[0] {
 			case common.LibraryName:
 				if action[i], err = common.MakeTask(&actionSpec[i]); err != nil {
-					break Loop
-				}
-			case "knative":
-				if action[i], err = knative.MakeTask(&actionSpec[i]); err != nil {
 					break Loop
 				}
 			case notification.LibraryName:

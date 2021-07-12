@@ -6,6 +6,7 @@ import (
 	"time"
 
 	iter8 "github.com/iter8-tools/etc3/api/v2alpha2"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -54,22 +55,18 @@ var GetClient = func() (rc client.Client, err error) {
 		var gv schema.GroupVersion
 
 		// Support for notification library
-		// s := &corev1.Secret{}
-		gvk = schema.GroupVersionKind{
+		gv = schema.GroupVersion{
 			Group:   "",
 			Version: "v1",
-			Kind:    "Secret",
 		}
-		// gvk = s.GetObjectKind().GroupVersionKind()
-		gv = schema.GroupVersion{
-			Group:   gvk.Group,
-			Version: gvk.Version,
-		}
-		metav1.AddToGroupVersion(scheme, schema.GroupVersion{
-			Group:   gvk.Group,
-			Version: gvk.Version,
-		})
+		metav1.AddToGroupVersion(scheme, gv)
 		scheme.AddKnownTypes(gv, &corev1.Secret{})
+
+		// Support for deployments
+		metav1.AddToGroupVersion(scheme, appsv1.SchemeGroupVersion)
+		scheme.AddKnownTypes(appsv1.SchemeGroupVersion,
+			&appsv1.Deployment{},
+		)
 
 		// Support for knative library
 		ksvc := &servingv1.Service{}
@@ -138,8 +135,6 @@ func UpdateInClusterExperiment(e *Experiment) (err error) {
 	}
 	return err
 }
-
-//
 
 // UpdateInClusterExperimentStatus updates the experiment status within cluster.
 func UpdateInClusterExperimentStatus(e *Experiment) (err error) {
