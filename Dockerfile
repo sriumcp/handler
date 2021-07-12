@@ -34,7 +34,7 @@ RUN linux-amd64/helm version
 # Install Kustomize v3
 RUN curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
 RUN cp kustomize /bin
-RUN GOBIN=/bin go get fortio.org/fortio
+RUN GOBIN=/bin go get fortio.org/fortio@v1.17.0
 
 # Small linux image with useful shell commands
 FROM debian:buster-slim
