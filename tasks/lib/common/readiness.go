@@ -97,7 +97,7 @@ var getCommand = func(name string, arg ...string) command {
 	return exec.Command(name, arg...)
 }
 
-// Check existence and readiness of K8s objects.
+// Run checks existence and readiness of K8s objects.
 func (t *ReadinessTask) Run(ctx context.Context) error {
 	exp, err := tasks.GetExperimentFromContext(ctx)
 	if err != nil {

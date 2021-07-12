@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/iter8-tools/etc3/api/v2alpha2"
@@ -73,6 +74,17 @@ var _ = Describe("Readiness task", func() {
 			}
 			// this should succeed... since the command has been faked to succeed
 			Expect(readiness.Run(ctx)).ToNot(HaveOccurred())
+
+			// fake the commands again... this time with failure...
+			getCommand = func(name string, arg ...string) command {
+				return &fakeCommand{
+					err:  errors.New("Fake command failures have occurred"),
+					name: "my",
+					arg:  []string{"fake", "command"},
+				}
+			}
+			// this should fail... since the command has been faked to fail
+			Expect(readiness.Run(ctx)).To(HaveOccurred())
 		})
 	})
 })
