@@ -12,6 +12,13 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
+func TestMakeFakeCommonTask(t *testing.T) {
+	_, err := MakeTask(&v2alpha2.TaskSpec{
+		Task: LibraryName + "/" + "fake",
+	})
+	assert.Error(t, err)
+}
+
 func TestMakeTask(t *testing.T) {
 	b, _ := json.Marshal("echo")
 	a, _ := json.Marshal([]string{"hello", "people", "of", "earth"})
@@ -37,6 +44,13 @@ func TestMakeTask(t *testing.T) {
 		},
 	})
 	assert.Nil(t, task)
+	assert.Error(t, err)
+}
+
+func TestMakeFakeBashTask(t *testing.T) {
+	_, err := MakeBashTask(&v2alpha2.TaskSpec{
+		Task: LibraryName + "/" + "fake",
+	})
 	assert.Error(t, err)
 }
 
