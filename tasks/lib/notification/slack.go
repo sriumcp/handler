@@ -11,8 +11,6 @@ import (
 	"github.com/iter8-tools/handler/tasks"
 	"github.com/slack-go/slack"
 	"github.com/spf13/viper"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -79,7 +77,7 @@ func (t *SlackTask) internalRun(ctx context.Context) error {
 func (t *SlackTask) postNotification(e *tasks.Experiment) error {
 	token := t.getToken()
 	if token == nil {
-		return errors.New("Unable to find token")
+		return errors.New("unable to find token")
 	}
 	log.Trace("token", t.getToken())
 	api := slack.New(*token)
@@ -203,16 +201,16 @@ func (t *SlackTask) getToken() *string {
 		namespace = nn[0]
 		name = nn[1]
 	}
-	log.Trace("namespace", namespace)
-	log.Trace("name", name)
 
-	secret := corev1.Secret{}
-	err := tasks.GetTypedObject(&types.NamespacedName{Namespace: namespace, Name: name}, &secret)
-
+	s, err := tasks.GetSecret(namespace + "/" + name)
 	if err != nil {
 		log.Error(err)
 		return nil
 	}
-	token := string(secret.Data["token"])
+	token, err := tasks.GetTokenFromSecret(s)
+	if err != nil {
+		log.Error(err)
+		return nil
+	}
 	return &token
 }

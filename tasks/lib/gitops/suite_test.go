@@ -1,8 +1,9 @@
-package tasks
+package gitops
 
 import (
 	"testing"
 
+	"github.com/iter8-tools/handler/tasks"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/rest"
@@ -19,7 +20,7 @@ func TestAPI(t *testing.T) {
 }
 
 var _ = BeforeSuite(func(done Done) {
-	log = GetLogger()
+	log = tasks.GetLogger()
 	log.SetOutput(GinkgoWriter)
 
 	By("bootstrapping test environment")
@@ -31,15 +32,15 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(restConf).ToNot(BeNil())
 	// Install CRDs into the cluster
-	crdPath := CompletePath("../", "testdata/crd/bases")
+	crdPath := tasks.CompletePath("../../../", "testdata/crd/bases")
 	_, err = envtest.InstallCRDs(restConf, envtest.CRDInstallOptions{Paths: []string{crdPath}})
 	Expect(err).ToNot(HaveOccurred())
 
 	By("initializing k8sclient")
-	GetConfig = func() (*rest.Config, error) {
+	tasks.GetConfig = func() (*rest.Config, error) {
 		return restConf, err
 	}
-	k8sClient, err = GetClient()
+	k8sClient, err = tasks.GetClient()
 	Expect(k8sClient).ToNot(BeNil())
 	Expect(err).ToNot(HaveOccurred())
 

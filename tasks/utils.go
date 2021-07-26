@@ -9,6 +9,7 @@ import (
 
 	iter8utils "github.com/iter8-tools/etc3/util"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 )
 
 var log *logrus.Logger
@@ -96,7 +97,7 @@ func WaitTimeoutOrError(wg *sync.WaitGroup, timeout time.Duration, errCh chan er
 	case <-c: // completed normally
 		return nil
 	case <-time.After(timeout): // timeout
-		return errors.New("Timed out waiting for go routines to complete") // timed out
+		return errors.New("timed out waiting for go routines to complete") // timed out
 	case err := <-errCh: // error in channel
 		return err
 	}
@@ -107,9 +108,19 @@ func GetJSONBytes(url string) ([]byte, error) {
 	var myClient = &http.Client{Timeout: 10 * time.Second}
 	r, err := myClient.Get(url)
 	if err != nil || r.StatusCode >= 400 {
-		return nil, errors.New("Error while fetching payload")
+		return nil, errors.New("error while fetching payload")
 	}
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	return body, err
+}
+
+// GetTokenFromSecret gets token from k8s secret object
+// can be used in notification, gitops and other tasks that use secret tokens
+func GetTokenFromSecret(secret *corev1.Secret) (string, error) {
+	token := string(secret.Data["token"])
+	if token == "" {
+		return "", errors.New("empty token in secret")
+	}
+	return token, nil
 }

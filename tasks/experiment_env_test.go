@@ -1,9 +1,8 @@
-package tasks_test
+package tasks
 
 import (
 	"context"
 
-	"github.com/iter8-tools/handler/tasks"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -13,18 +12,18 @@ import (
 
 var _ = Describe("Experiment's handler field", func() {
 	Context("when containing handler actions", func() {
-		var exp *tasks.Experiment
+		var exp *Experiment
 		var err error
 		It("should retrieve handler info properly", func() {
 			By("reading the experiment from file")
-			exp, err = (&tasks.Builder{}).FromFile(tasks.CompletePath("../", "testdata/experiment1.yaml")).Build()
+			exp, err = (&Builder{}).FromFile(CompletePath("../", "testdata/experiment1.yaml")).Build()
 			Expect(err).ToNot(HaveOccurred())
 
 			By("creating experiment in cluster")
 			Expect(k8sClient.Create(context.Background(), exp)).To(Succeed())
 
 			By("fetching experiment from cluster")
-			b := &tasks.Builder{}
+			b := &Builder{}
 			exp2, err := b.FromCluster(&types.NamespacedName{
 				Name:      "sklearn-iris-experiment-1",
 				Namespace: "default",
@@ -35,20 +34,20 @@ var _ = Describe("Experiment's handler field", func() {
 
 		It("should handle non-existing experiments properly", func() {
 			By("signaling error")
-			b := &tasks.Builder{}
+			b := &Builder{}
 			// store k8sclient defaults
-			numAttempts := tasks.NumAttempt
-			period := tasks.Period
+			numAttempts := NumAttempt
+			period := Period
 			// change k8sclient defaults
-			tasks.NumAttempt = 2
-			tasks.Period = 2
+			NumAttempt = 2
+			Period = 2
 			_, err := b.FromCluster(&types.NamespacedName{
 				Name:      "non-existent",
 				Namespace: "default",
 			}).Build()
 			// change k8sclient defaults
-			tasks.NumAttempt = numAttempts
-			tasks.Period = period
+			NumAttempt = numAttempts
+			Period = period
 			Expect(err).To(HaveOccurred())
 		})
 
@@ -103,7 +102,7 @@ var _ = Describe("GetSecret", func() {
 			}
 			k8sClient.Create(context.Background(), &secret)
 			By("Calling GetSecret")
-			s, err := tasks.GetSecret("default/test-secret")
+			s, err := GetSecret("default/test-secret")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(string(s.Data["secretName"])).To(Equal("tester"))
 		})

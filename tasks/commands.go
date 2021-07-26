@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/iter8-tools/etc3/api/v2alpha2"
-	iter8 "github.com/iter8-tools/etc3/api/v2alpha2"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -12,16 +11,16 @@ import (
 // GetVersionRecommendedForPromotion from the experiment.
 func (e *Experiment) GetVersionRecommendedForPromotion() (string, error) {
 	if e == nil {
-		return "", errors.New("GetVersionRecommendedForPromotion() called on nil experiment")
+		return "", errors.New("function GetVersionRecommendedForPromotion() called on nil experiment")
 	}
 	if e.Status.VersionRecommendedForPromotion == nil {
-		return "", errors.New("Version recommended for promotion not found in experiment status")
+		return "", errors.New("version recommended for promotion not found in experiment status")
 	}
 	return *e.Status.VersionRecommendedForPromotion, nil
 }
 
 // GetVersionDetail from the experiment for a named version.
-func (e *Experiment) GetVersionDetail(versionName string) (*iter8.VersionDetail, error) {
+func (e *Experiment) GetVersionDetail(versionName string) (*v2alpha2.VersionDetail, error) {
 	if e == nil {
 		return nil, errors.New("getVersionDetail(...) called on nil experiment")
 	}

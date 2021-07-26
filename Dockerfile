@@ -31,7 +31,12 @@ RUN linux-amd64/helm version
 # Install Kustomize v3
 RUN curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
 RUN cp kustomize /bin
+
+# Install Fortio
 RUN GOBIN=/bin go get fortio.org/fortio@v1.17.0
+
+# Install yq
+RUN GO111MODULE=on GOBIN=/bin go get github.com/mikefarah/yq/v4
 
 # Small linux image with useful shell commands
 FROM debian:buster-slim
@@ -41,6 +46,7 @@ COPY --from=builder /bin/kubectl /bin/kubectl
 COPY --from=builder /bin/kustomize /bin/kustomize
 COPY --from=builder /workspace/linux-amd64/helm /bin/helm
 COPY --from=builder /bin/fortio /bin/fortio
+COPY --from=builder /bin/yq /bin/yq
 
 # Install git
 RUN apt-get update && apt-get install -y git

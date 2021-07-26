@@ -1,39 +1,31 @@
-package tasks_test
+package tasks
 
 import (
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/iter8-tools/handler/tasks"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMakeTask(t *testing.T) {
-	log := tasks.GetLogger()
-	log.Info("hello world")
-	assert.NotEmpty(t, log)
-	tasks.SetLogLevel(logrus.InfoLevel)
-}
-
 func TestGetJsonBytes(t *testing.T) {
 	// valid
-	_, err := tasks.GetJSONBytes("https://httpbin.org/stream/1")
+	_, err := GetJSONBytes("https://httpbin.org/stream/1")
 	assert.NoError(t, err)
 
 	// invalid
-	_, err = tasks.GetJSONBytes("https://httpbin.org/undef")
+	_, err = GetJSONBytes("https://httpbin.org/undef")
 	assert.Error(t, err)
 }
 
 func TestPointers(t *testing.T) {
-	assert.Equal(t, int32(1), *tasks.Int32Pointer(1))
-	assert.Equal(t, float32(0.1), *tasks.Float32Pointer(0.1))
-	assert.Equal(t, float64(0.1), *tasks.Float64Pointer(0.1))
-	assert.Equal(t, "hello", *tasks.StringPointer("hello"))
-	assert.Equal(t, false, *tasks.BoolPointer(false))
-	assert.Equal(t, tasks.GET, *tasks.HTTPMethodPointer(tasks.GET))
+	assert.Equal(t, int32(1), *Int32Pointer(1))
+	assert.Equal(t, float32(0.1), *Float32Pointer(0.1))
+	assert.Equal(t, float64(0.1), *Float64Pointer(0.1))
+	assert.Equal(t, "hello", *StringPointer("hello"))
+	assert.Equal(t, false, *BoolPointer(false))
+	assert.Equal(t, GET, *HTTPMethodPointer(GET))
 }
 
 func TestWait(t *testing.T) {
@@ -49,7 +41,7 @@ func TestWait(t *testing.T) {
 		}(j)
 	}
 
-	err := tasks.WaitTimeoutOrError(&wg, 30*time.Second, errCh)
+	err := WaitTimeoutOrError(&wg, 30*time.Second, errCh)
 	assert.NoError(t, err)
 }
 
@@ -66,7 +58,12 @@ func TestWaitTimeout(t *testing.T) {
 		}(j)
 	}
 
-	err := tasks.WaitTimeoutOrError(&wg, 5*time.Second, errCh)
+	err := WaitTimeoutOrError(&wg, 5*time.Second, errCh)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "Timed out waiting for go routines to complete")
+	assert.Contains(t, err.Error(), "timed out waiting for go routines to complete")
+}
+
+func TestSetLogLevel(t *testing.T) {
+	SetLogLevel(logrus.InfoLevel)
+	assert.Equal(t, logrus.InfoLevel, log.GetLevel())
 }

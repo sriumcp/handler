@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"strings"
 
 	"github.com/iter8-tools/etc3/api/v2alpha2"
 	"github.com/iter8-tools/handler/tasks"
@@ -18,21 +17,6 @@ import (
 	// "sigs.k8s.io/controller-runtime/pkg/client"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
-
-type fakeCommand struct {
-	err  error
-	name string
-	arg  []string
-}
-
-func (f *fakeCommand) Run() error {
-	return f.err
-}
-
-func (f *fakeCommand) String() string {
-	elems := append([]string{f.name}, f.arg...)
-	return strings.Join(elems, " ")
-}
 
 var _ = Describe("notification/http task", func() {
 	Context("When authType is Basic", func() {

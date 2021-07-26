@@ -87,7 +87,7 @@ func (tags *Tags) Interpolate(str *string) (string, error) {
 	if templ, err = template.New("").Parse(*str); err == nil {
 		buf := bytes.Buffer{}
 		if err = templ.Execute(&buf, tags.M); err == nil {
-			return string(buf.Bytes()), nil
+			return buf.String(), nil
 		}
 		log.Error("template execution error: ", err)
 		return "", errors.New("cannot interpolate string")

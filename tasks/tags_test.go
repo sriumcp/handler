@@ -1,4 +1,4 @@
-package tasks_test
+package tasks
 
 import (
 	"io/ioutil"
@@ -7,14 +7,13 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/iter8-tools/etc3/api/v2alpha2"
-	"github.com/iter8-tools/handler/tasks"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestInterpolate(t *testing.T) {
-	tags := tasks.NewTags().
+	tags := NewTags().
 		With("name", "tester").
 		With("revision", "revision1").
 		With("container", "super-container")
@@ -46,7 +45,7 @@ func TestInterpolate(t *testing.T) {
 
 	// empty tags (success cases)
 	str := "hello {{.name}}"
-	tags = tasks.NewTags()
+	tags = NewTags()
 	interpolated, err := tags.Interpolate(&str)
 	assert.NoError(t, err)
 	assert.Equal(t, "hello ", interpolated)
@@ -63,7 +62,7 @@ func TestInterpolate(t *testing.T) {
 	}
 
 	str = "hello {{.secret.secretName}}"
-	tags = tasks.NewTags().WithSecret("secret", &secret)
+	tags = NewTags().WithSecret("secret", &secret)
 	assert.Contains(t, tags.M, "secret")
 	interpolated, err = tags.Interpolate(&str)
 	assert.NoError(t, err)
@@ -77,7 +76,7 @@ func TestWithVersionRecommendedForPromotion(t *testing.T) {
 	exp := &v2alpha2.Experiment{}
 	err = yaml.Unmarshal(data, exp)
 	assert.NoError(t, err)
-	tags := tasks.NewTags().WithRecommendedVersionForPromotion(exp)
+	tags := NewTags().WithRecommendedVersionForPromotion(exp)
 	assert.Equal(t, "revision1", tags.M["revision"])
 }
 
@@ -88,7 +87,7 @@ func TestWithOutVersionRecommendedForPromotion(t *testing.T) {
 	exp := &v2alpha2.Experiment{}
 	err = yaml.Unmarshal(data, exp)
 	assert.NoError(t, err)
-	tags := tasks.NewTags().WithRecommendedVersionForPromotion(exp)
+	tags := NewTags().WithRecommendedVersionForPromotion(exp)
 	assert.NotContains(t, tags.M, "revision1")
 	// assert.Equal(t, "revision1", tags.M["revision"])
 }
