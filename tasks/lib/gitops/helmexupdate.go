@@ -89,12 +89,16 @@ func (t *HelmexUpdateTask) initializeDefaults(exp *tasks.Experiment) {
 func (t *HelmexUpdateTask) getToken() (string, error) {
 	s, err := tasks.GetSecret(*t.With.SecretNamespace + "/" + *t.With.SecretName)
 	if err != nil {
+		log.Error(err)
 		return "", err
 	}
+	log.Trace("Got secret")
 	token, err := tasks.GetTokenFromSecret(s)
 	if err != nil {
+		log.Error(err)
 		return "", err
 	}
+	log.Trace("Got token from secret")
 	return token, nil
 }
 
@@ -112,7 +116,7 @@ func (t *HelmexUpdateTask) updateGitRepoURL() error {
 	if err != nil {
 		return err
 	}
-	t.With.GitRepo = strings.ReplaceAll(t.With.GitRepo, "https://", "https://"+t.With.Username+":"+token)
+	t.With.GitRepo = strings.ReplaceAll(t.With.GitRepo, "https://", "https://"+t.With.Username+":"+token+"@")
 	return nil
 }
 
@@ -127,17 +131,25 @@ func (t *HelmexUpdateTask) cloneGitRepo() error {
 	cmd := exec.Command("rm", "-rf", LocalDir)
 	err := cmd.Run()
 	if err != nil {
+		log.Error("unable to remove ", LocalDir)
+		log.Error(err)
 		return err
 	}
 	// create localdir
 	cmd = exec.Command("mkdir", "-p", LocalDir)
 	err = cmd.Run()
 	if err != nil {
+		log.Error("unable to make ", LocalDir)
+		log.Error(err)
 		return err
 	}
 	// clone into localdir
 	cmd = exec.Command("git", "clone", t.With.GitRepo, LocalDir, "--branch="+*t.With.Branch)
 	err = cmd.Run()
+	if err != nil {
+		log.Error("unable to git clone into ", LocalDir)
+		log.Error(err)
+	}
 	return err
 }
 
@@ -183,19 +195,21 @@ func (t *HelmexUpdateTask) verifyCandidateID(exp *tasks.Experiment) error {
 // promoteCandidate updates the values file so that candidate is promoted
 func (t *HelmexUpdateTask) promoteCandidate(valuesFilePath string) error {
 	// promote candidate
-	cmd := exec.Command("yq", "eval", ".baseline.dynamic = .candidate.dynamic", "-i", valuesFilePath)
+	script := "yq eval '.baseline.dynamic = .candidate.dynamic' -i " + valuesFilePath
+	cmd := exec.Command("bash", "-c", script)
 	out, err := cmd.CombinedOutput()
-	log.Info("running replacement cmd: ", cmd.String())
-	log.Info("combined output from replacement: ", string(out))
+	log.Trace("running replacement cmd: ", cmd.String())
+	log.Trace("combined output from replacement: ", string(out))
 	if err != nil {
 		return err
 	}
 
 	// nullify candidate
-	cmd = exec.Command("yq", "eval", ".candidate = null", "-i", valuesFilePath)
+	script = "yq eval '.candidate = null' -i " + valuesFilePath
+	cmd = exec.Command("bash", "-c", script)
 	out, err = cmd.CombinedOutput()
-	log.Info("running nullify cmd: ", cmd.String())
-	log.Info("combined output from nullify: ", string(out))
+	log.Trace("running nullify cmd: ", cmd.String())
+	log.Trace("combined output from nullify: ", string(out))
 	if err != nil {
 		return err
 	}
@@ -206,10 +220,11 @@ func (t *HelmexUpdateTask) promoteCandidate(valuesFilePath string) error {
 // promoteBaseline updates the values file so that baseline is promoted
 func (t *HelmexUpdateTask) promoteBaseline(valuesFilePath string) error {
 	// nullify candidate
-	cmd := exec.Command("yq", "eval", ".candidate = null", "-i", valuesFilePath)
+	script := "yq eval '.candidate = null' -i " + valuesFilePath
+	cmd := exec.Command("bash", "-c", script)
 	out, err := cmd.CombinedOutput()
-	log.Info("running nullify cmd: ", cmd.String())
-	log.Info("combined output from nullify: ", string(out))
+	log.Trace("running nullify cmd: ", cmd.String())
+	log.Trace("combined output from nullify: ", string(out))
 	if err != nil {
 		return err
 	}
@@ -257,13 +272,17 @@ func (t *HelmexUpdateTask) updateValuesFile(exp *tasks.Experiment) error {
 // this method is intended to be invoked after updateValuesFile(...)
 // ToDo: implement request-pr
 func (t *HelmexUpdateTask) updateInGit() error {
-	script := fmt.Sprintf("git config user.email 'iter8@iter8.tools'; " +
-		"git config user.name '" + t.With.Username + "'; " +
-		"cd " + LocalDir + " ;" +
-		"git commit -a -m --allow-empty 'update values file' ;" +
-		"git push -f origin " + *t.With.Branch + " ;")
+	script := fmt.Sprintf("git config user.email 'iter8@iter8.tools';" +
+		" git config user.name '" + t.With.Username + "';" +
+		" cd " + LocalDir + ";" +
+		" git commit -a -m 'update values file' --allow-empty;" +
+		" git push -f origin " + *t.With.Branch + ";")
+
 	cmd := exec.Command("/bin/bash", "-c", script)
-	err := cmd.Run()
+	out, err := cmd.CombinedOutput()
+	log.Trace("running script for updating git: ", cmd.String())
+	log.Trace("combined output from script: ", string(out))
+
 	return err
 }
 
@@ -278,24 +297,45 @@ func (t *HelmexUpdateTask) Run(ctx context.Context) error {
 	t.initializeDefaults(exp)
 	err = t.validateInputs()
 	if err != nil {
+		log.Error("inputs not validated")
+		log.Error(err)
 		return err
 	}
+	log.Trace("validated inputts")
 	err = t.updateGitRepoURL()
 	if err != nil {
+		log.Error("unable to update git repo URL")
+		log.Error(err)
 		return err
 	}
+	log.Trace("updated git repo url")
 	err = t.cloneGitRepo()
 	if err != nil {
+		log.Error("unable to clone git repo")
+		log.Error(err)
 		return err
 	}
+	log.Trace("cloned git repo")
 	err = t.verifyCandidateID(exp)
 	if err != nil {
+		log.Error("unable to verify candidate id")
+		log.Error(err)
 		return err
 	}
+	log.Trace("verified candidate id")
 	err = t.updateValuesFile(exp)
 	if err != nil {
+		log.Error("unable to update values file")
+		log.Error(err)
 		return err
 	}
+	log.Trace("updated values file")
 	err = t.updateInGit()
+	if err != nil {
+		log.Error("unable to update in Git")
+		log.Error(err)
+		return err
+	}
+	log.Trace("updated Git repo")
 	return err
 }
