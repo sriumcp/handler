@@ -272,9 +272,9 @@ func (t *HelmexUpdateTask) updateValuesFile(exp *tasks.Experiment) error {
 // this method is intended to be invoked after updateValuesFile(...)
 // ToDo: implement request-pr
 func (t *HelmexUpdateTask) updateInGit() error {
-	script := fmt.Sprintf("git config user.email 'iter8@iter8.tools';" +
+	script := fmt.Sprintf("cd " + LocalDir + ";" +
+		" git config user.email 'iter8@iter8.tools';" +
 		" git config user.name '" + t.With.Username + "';" +
-		" cd " + LocalDir + ";" +
 		" git commit -a -m 'update values file' --allow-empty;" +
 		" git push -f origin " + *t.With.Branch + ";")
 
