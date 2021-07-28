@@ -107,6 +107,7 @@ func GetSecret(namespacedname string) (*corev1.Secret, error) {
 	log.Trace("retrieving secret: ", namespace, "/", name)
 
 	secret := corev1.Secret{}
+	log.Trace("Getting secret. ", "Namespace: ", namespace, " Name: ", name)
 	err := GetTypedObject(&types.NamespacedName{Namespace: namespace, Name: name}, &secret)
 	return &secret, err
 }

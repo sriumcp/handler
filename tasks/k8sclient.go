@@ -92,6 +92,7 @@ func (b *Builder) FromCluster(nn *client.ObjectKey) *Builder {
 
 // GetTypedObject gets a typed object from the k8s cluster. Types of such objects include experiment, knative service, etc. This function attempts to get the object `numAttempts` times, with the interval between attempts equal to `period`.
 func GetTypedObject(nn *client.ObjectKey, obj client.Object) error {
+	log.Trace("Getting typed object: ", obj.GetObjectKind())
 	var err error
 	var rc client.Client
 	if rc, err = GetClient(); err == nil {
@@ -100,7 +101,9 @@ func GetTypedObject(nn *client.ObjectKey, obj client.Object) error {
 			if err == nil {
 				break
 			}
+			log.Trace("Finished attempt: ", i, " Total attempts: ", NumAttempt)
 			time.Sleep(Period)
+			log.Trace("Sleeping period: ", Period)
 		}
 	}
 	return err
