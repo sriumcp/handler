@@ -33,6 +33,8 @@ func MakeTask(t *v2alpha2.TaskSpec) (tasks.Task, error) {
 		return MakeSlackTask(t)
 	case LibraryName + "/" + HTTPTaskName:
 		return MakeHTTPTask(t)
+	case LibraryName + "/" + GHWorkflowTaskName:
+		return MakeGHWorkflowTask(t)
 	// add additional tasks here
 	default:
 		return nil, errors.New("Unknown task: " + t.Task)
