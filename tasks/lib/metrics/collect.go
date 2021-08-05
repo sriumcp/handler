@@ -64,9 +64,8 @@ type CollectInputs struct {
 
 // CollectTask enables collection of Iter8's built-in metrics.
 type CollectTask struct {
-	Library string        `json:"library" yaml:"library"`
-	Task    string        `json:"task" yaml:"task"`
-	With    CollectInputs `json:"with" yaml:"with"`
+	tasks.TaskMeta
+	With CollectInputs `json:"with" yaml:"with"`
 }
 
 // MakeCollect constructs a CollectTask out of a collect task spec
@@ -84,7 +83,7 @@ func MakeCollect(t *v2alpha2.TaskSpec) (tasks.Task, error) {
 		ct := &CollectTask{}
 		err = json.Unmarshal(jsonBytes, &ct)
 		if ct.With.Versions == nil {
-			return nil, errors.New("Collect task with nil versions")
+			return nil, errors.New("collect task with nil versions")
 		}
 		bt = ct
 	}
@@ -152,11 +151,7 @@ func aggregate(oldResults map[string]*Result, version string, newResult *Result)
 			updatedResult.RetCodes = newResult.RetCodes
 		} else {
 			for key := range newResult.RetCodes {
-				if _, ok := oldResults[version].RetCodes[key]; ok {
-					oldResults[version].RetCodes[key] += newResult.RetCodes[key]
-				} else {
-					oldResults[version].RetCodes[key] = newResult.RetCodes[key]
-				}
+				oldResults[version].RetCodes[key] += newResult.RetCodes[key]
 			}
 		}
 	} else {
@@ -300,7 +295,7 @@ func (t *CollectTask) Run(ctx context.Context) error {
 		return err
 	}
 	// if this task is **not** loadOnly
-	if t.With.LoadOnly == nil || *t.With.LoadOnly == false {
+	if t.With.LoadOnly == nil || !*t.With.LoadOnly {
 		// bootstrap AggregatedBuiltinHists with data already present in experiment status
 		if exp.Status.Analysis != nil && exp.Status.Analysis.AggregatedBuiltinHists != nil {
 			jsonBytes, err := json.Marshal(exp.Status.Analysis.AggregatedBuiltinHists.Data)
@@ -347,7 +342,7 @@ func (t *CollectTask) Run(ctx context.Context) error {
 			data, err := t.resultForVersion(entry, k, tmpfileName)
 			if err == nil {
 				// if this task is **not** loadOnly
-				if t.With.LoadOnly == nil || *t.With.LoadOnly == false {
+				if t.With.LoadOnly == nil || !*t.With.LoadOnly {
 					// Update fortioData in a threadsafe manner
 					lock.Lock()
 					fortioData = aggregate(fortioData, t.With.Versions[k].Name, data)
@@ -380,7 +375,7 @@ func (t *CollectTask) Run(ctx context.Context) error {
 	log.Trace("Wait group finished normally")
 
 	// if this task is **not** loadOnly
-	if t.With.LoadOnly == nil || *t.With.LoadOnly == false {
+	if t.With.LoadOnly == nil || !*t.With.LoadOnly {
 		// Update experiment status with results
 		// update to experiment status will result in reconcile request to etc3
 		// unless the task runner job executing this action is completed, this request will not have have an immediate effect in the experiment reconcilation process
@@ -392,13 +387,13 @@ func (t *CollectTask) Run(ctx context.Context) error {
 
 		exp.SetAggregatedBuiltinHists(v1.JSON{Raw: bytes1})
 
-		err = tasks.UpdateInClusterExperimentStatus(exp)
+		tasks.UpdateInClusterExperimentStatus(exp)
 
 		var prettyBody bytes.Buffer
-		bytes2, err := json.Marshal(exp)
+		bytes2, _ := json.Marshal(exp)
 
 		json.Indent(&prettyBody, bytes2, "", "  ")
-		log.Trace(string(prettyBody.Bytes()))
+		log.Trace(prettyBody.String())
 	}
 
 	return err

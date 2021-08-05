@@ -17,7 +17,7 @@ func TestMakeFakeMetricsTask(t *testing.T) {
 }
 
 func TestMakeTask(t *testing.T) {
-	vers, err := json.Marshal([]Version{
+	vers, _ := json.Marshal([]Version{
 		{
 			Name: "test",
 			URL:  "https://iter8.tools",

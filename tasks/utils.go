@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	iter8utils "github.com/iter8-tools/etc3/util"
+	controllers "github.com/iter8-tools/etc3/controllers"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -40,7 +40,7 @@ func GetLogger() *logrus.Logger {
 type ContextKey string
 
 // CompletePath determines complete path of a file
-var CompletePath func(prefix string, suffix string) string = iter8utils.CompletePath
+var CompletePath func(prefix string, suffix string) string = controllers.CompletePath
 
 // Int32Pointer takes an int32 as input, creates a new variable with the input value, and returns a pointer to the variable
 func Int32Pointer(i int32) *int32 {

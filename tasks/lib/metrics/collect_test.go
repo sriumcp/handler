@@ -9,8 +9,10 @@ import (
 
 func TestInitializeDefaults(t *testing.T) {
 	ct := CollectTask{
-		Library: "metrics",
-		Task:    "collect",
+		TaskMeta: tasks.TaskMeta{
+			Library: LibraryName,
+			Task:    CollectTaskName,
+		},
 		With: CollectInputs{
 			Versions: []Version{{
 				Name: "default",
@@ -20,7 +22,7 @@ func TestInitializeDefaults(t *testing.T) {
 	}
 	ct.InitializeDefaults()
 	assert.Equal(t, "5s", *ct.With.Time)
-	assert.Equal(t, tasks.Float32Pointer(8.0), *&ct.With.Versions[0].QPS)
+	assert.Equal(t, tasks.Float32Pointer(8.0), ct.With.Versions[0].QPS)
 }
 
 func TestAggregate(t *testing.T) {
@@ -109,8 +111,10 @@ func TestPayloadFile(t *testing.T) {
 
 func TestResultForVersion(t *testing.T) {
 	ct := CollectTask{
-		Library: "metrics",
-		Task:    "collect",
+		TaskMeta: tasks.TaskMeta{
+			Library: LibraryName,
+			Task:    CollectTaskName,
+		},
 		With: CollectInputs{
 			Versions: []Version{{
 				Name: "default",
