@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -44,7 +45,9 @@ func TestWithExperiment(t *testing.T) {
 	}
 }
 
-type testTask struct{}
+type testTask struct {
+	TaskMeta
+}
 
 func (t *testTask) Run(ctx context.Context) error {
 	return nil
@@ -65,4 +68,42 @@ func TestActionRun(t *testing.T) {
 	a := &action
 	err = a.Run(ctx)
 	assert.NoError(t, err)
+}
+
+type badTestTask struct {
+	TaskMeta
+}
+
+func (t *badTestTask) Run(ctx context.Context) error {
+	return errors.New("shouldn't have run")
+}
+
+func TestBadActionRun(t *testing.T) {
+	action := Action{}
+	t1 := badTestTask{
+		TaskMeta: TaskMeta{
+			Library:   "hello",
+			Task:      "world",
+			Condition: StringPointer("WinnerFound()"),
+		},
+	}
+	action = append(action, &t1)
+
+	exp, err := (&Builder{}).FromFile(CompletePath("../", "testdata/experiment10.yaml")).Build()
+	assert.NoError(t, err)
+	ctx := context.WithValue(context.Background(), ContextKey("experiment"), exp)
+
+	a := &action
+	err = a.Run(ctx)
+	assert.NoError(t, err)
+
+	t2 := badTestTask{}
+	action = append(action, &t2)
+
+	err = a.Run(ctx)
+	assert.Error(t, err)
+
+	t2.Condition = StringPointer("AnotherOneBytesTheDust()")
+	err = a.Run(ctx)
+	assert.Error(t, err)
 }

@@ -44,8 +44,10 @@ var _ = Describe("metrics library", func() {
 
 			By("creating a metrics/collect task")
 			ct := CollectTask{
-				Library: "metrics",
-				Task:    "collect",
+				TaskMeta: tasks.TaskMeta{
+					Library: LibraryName,
+					Task:    CollectTaskName,
+				},
 				With: CollectInputs{
 					Versions: []Version{
 						{
@@ -119,8 +121,10 @@ var _ = Describe("metrics library", func() {
 
 			By("creating a metrics/collect task")
 			ct := CollectTask{
-				Library: "metrics",
-				Task:    "collect",
+				TaskMeta: tasks.TaskMeta{
+					Library: LibraryName,
+					Task:    CollectTaskName,
+				},
 				With: CollectInputs{
 					LoadOnly: tasks.BoolPointer(true),
 					Versions: []Version{

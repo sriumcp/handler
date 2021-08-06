@@ -92,6 +92,28 @@ func (exp *Experiment) ToMap() (map[string]interface{}, error) {
 	return expObj, nil
 }
 
+// WinnerFound returns true if Experiment found a winner
+func (exp *Experiment) WinnerFound() bool {
+	if exp != nil {
+		if exp.Status.Analysis != nil {
+			if exp.Status.Analysis.WinnerAssessment != nil {
+				return exp.Status.Analysis.WinnerAssessment.Data.WinnerFound
+			}
+		}
+	}
+	return false
+}
+
+// CandidateWon returns true if candidate won in the experiment
+func (exp *Experiment) CandidateWon() bool {
+	if exp.WinnerFound() {
+		if len(exp.Spec.VersionInfo.Candidates) == 1 {
+			return exp.Spec.VersionInfo.Candidates[0].Name == *exp.Status.Analysis.WinnerAssessment.Data.Winner
+		}
+	}
+	return false
+}
+
 // GetSecret retrieves a secret from the kubernetes cluster
 func GetSecret(namespacedname string) (*corev1.Secret, error) {
 	// get secret namespace and name
