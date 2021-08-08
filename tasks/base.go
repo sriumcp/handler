@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/antonmedv/expr"
+	"github.com/iter8-tools/etc3/api/v2alpha2"
 )
 
 func init() {
@@ -29,6 +30,11 @@ type TaskMeta struct {
 // GetCondition returns condition from TaskMeta
 func (tm TaskMeta) GetCondition() *string {
 	return tm.Condition
+}
+
+// VersionInfo contains header and url information needed to send requests to each version.
+type VersionInfo struct {
+	Variables []v2alpha2.NamedValue `json:"variables,omitemtpy" yaml:"variables,omitempty"`
 }
 
 // Run the given action.
@@ -74,7 +80,7 @@ func GetDefaultTags(ctx context.Context) *Tags {
 		if err == nil {
 			tags = tags.
 				With("this", obj).
-				WithRecommendedVersionForPromotion(&exp.Experiment)
+				WithRecommendedVersionForPromotionDeprecated(&exp.Experiment)
 		}
 	} else {
 		log.Warn("No experiment found in context")

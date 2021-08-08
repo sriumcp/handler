@@ -17,7 +17,9 @@ const (
 
 // PromoteKubectlInputs contain the name and arguments of the command to be executed.
 type PromoteKubectlInputs struct {
-	Manifest string `json:"manifest" yaml:"manifest"`
+	//+optional
+	VersionInfo []tasks.VersionInfo `json:"versionInfo,omitempty" yaml:"versionInfo,omitempty"`
+	Manifest    string              `json:"manifest" yaml:"manifest"`
 	//+optional
 	Namespace *string `json:"namespace,omitempty" yaml:"namespace,omitempty"`
 	//+optional
@@ -68,7 +70,8 @@ func (t *PromoteKubectlTask) ToBashTask() *BashTask {
 			Task:    BashTaskName,
 		},
 		With: BashInputs{
-			Script: script,
+			VersionInfo: t.With.VersionInfo,
+			Script:      script,
 		},
 	}
 	return tSpec

@@ -75,7 +75,7 @@ func (t *HTTPTask) prepareRequest(ctx context.Context) (*http.Request, error) {
 	// then some placeholders may not be replaced
 	tags = tags.
 		With("this", obj).
-		WithRecommendedVersionForPromotion(&exp.Experiment)
+		WithRecommendedVersionForPromotion(&exp.Experiment, t.With.VersionInfo)
 
 	// log tags now before secret is added; we don't log the secret
 	log.Trace("tags without secrets: ", tags)

@@ -90,6 +90,10 @@ func (t *GHWorkflowTask) ToHTTPTask() *HTTPTask {
 				Value: "application/vnd.github.v3+json",
 			}},
 			Body: &body,
+			Inputs: Inputs{
+				VersionInfo:   t.With.VersionInfo,
+				IgnoreFailure: t.With.IgnoreFailure,
+			},
 		},
 	}
 

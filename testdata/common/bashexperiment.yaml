@@ -15,6 +15,13 @@ spec:
       start:
       - task: common/bash
         with:
+          versionInfo:
+          - variables:
+            - name: promote
+              value: v1
+          - variables:
+            - name: promote
+              value: v2
           script: | 
             echo "Experiment: {{ .this.metadata.namespace }}/{{ .this.metadata.name }}"
             echo "{{.promote}}"
@@ -60,3 +67,26 @@ spec:
         namespace: bookinfo-iter8
         name: bookinfo
         fieldPath: .spec.http[0].route[1].weight
+status:
+    completedIterations: 0
+    versionRecommendedForPromotion: productpage-v1
+    conditions:
+    - lastTransitionTime: "2021-08-06T11:54:55Z"
+      message: Experiment failed
+      reason: ExperimentCompleted
+      status: "True"
+      type: Completed
+    - lastTransitionTime: "2021-08-06T11:54:55Z"
+      message: Unable to find metric iter8-istio/request-count
+      reason: MetricUnavailable
+      status: "True"
+      type: Failed
+    - lastTransitionTime: "2021-08-06T11:54:37Z"
+      message: ""
+      reason: TargetAcquired
+      status: "True"
+      type: TargetAcquired
+    initTime: "2021-08-06T11:54:37Z"
+    lastUpdateTime: "2021-08-06T11:54:37Z"
+    message: 'ExperimentCompleted: Experiment failed'
+    stage: Completed

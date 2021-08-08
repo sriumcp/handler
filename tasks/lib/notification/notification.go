@@ -23,7 +23,8 @@ func init() {
 // Inputs contains inputs common to all notifations.
 // Should be included in the indivodual input structs via inline
 type Inputs struct {
-	IgnoreFailure *bool `json:"ignoreFailure,omitempty" yaml:"ignoreFailure,omitempty"`
+	VersionInfo   []tasks.VersionInfo `json:"versionInfo,omitempty" yaml:"versionInfo,omitempty"`
+	IgnoreFailure *bool               `json:"ignoreFailure,omitempty" yaml:"ignoreFailure,omitempty"`
 }
 
 // MakeTask constructs a Task from a TaskMeta or returns an error if any.

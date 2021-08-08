@@ -18,7 +18,8 @@ const (
 
 // BashInputs contain the name and arguments of the command to be executed.
 type BashInputs struct {
-	Script string `json:"script" yaml:"script"`
+	VersionInfo []tasks.VersionInfo `json:"versionInfo,omitempty" yaml:"versionInfo,omitempty"`
+	Script      string              `json:"script" yaml:"script"`
 }
 
 // BashTask encapsulates a command that can be executed.
@@ -66,8 +67,7 @@ func (t *BashTask) Run(ctx context.Context) error {
 	// then some placeholders may not be replaced
 	tags := tasks.NewTags().
 		With("this", obj).
-		WithRecommendedVersionForPromotion(&exp.Experiment)
-	log.Tracef("tags: %v", tags)
+		WithRecommendedVersionForPromotion(&exp.Experiment, t.With.VersionInfo)
 
 	// interpolate - replaces placeholders in the script with values
 	script, err := tags.Interpolate(&t.With.Script)

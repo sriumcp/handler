@@ -69,15 +69,61 @@ func TestInterpolate(t *testing.T) {
 	assert.Equal(t, "hello tester", interpolated)
 }
 
-func TestWithVersionRecommendedForPromotion(t *testing.T) {
+func TestWithVersionRecommendedForPromotionDeprecated(t *testing.T) {
 	var data []byte
 	data, err := ioutil.ReadFile(filepath.Join("..", "testdata", "experiment1.yaml"))
 	assert.NoError(t, err)
 	exp := &v2alpha2.Experiment{}
 	err = yaml.Unmarshal(data, exp)
 	assert.NoError(t, err)
-	tags := NewTags().WithRecommendedVersionForPromotion(exp)
+	tags := NewTags().WithRecommendedVersionForPromotionDeprecated(exp)
 	assert.Equal(t, "revision1", tags.M["revision"])
+}
+
+func TestWithOutVersionRecommendedForPromotionDeprecated(t *testing.T) {
+	var data []byte
+	data, err := ioutil.ReadFile(filepath.Join("..", "testdata", "experiment1-norecommended.yaml"))
+	assert.NoError(t, err)
+	exp := &v2alpha2.Experiment{}
+	err = yaml.Unmarshal(data, exp)
+	assert.NoError(t, err)
+	tags := NewTags().WithRecommendedVersionForPromotionDeprecated(exp)
+	assert.NotContains(t, tags.M, "revision1")
+	// assert.Equal(t, "revision1", tags.M["revision"])
+}
+
+func TestWithVersionDefaultRecommendedForPromotion(t *testing.T) {
+	var data []byte
+	data, err := ioutil.ReadFile(filepath.Join("..", "testdata", "experiment1.yaml"))
+	assert.NoError(t, err)
+	exp := &v2alpha2.Experiment{}
+	err = yaml.Unmarshal(data, exp)
+	assert.NoError(t, err)
+
+	vi := []VersionInfo{
+		{Variables: []v2alpha2.NamedValue{{Name: "foo", Value: "bar1"}}},
+		{Variables: []v2alpha2.NamedValue{{Name: "foo", Value: "bar2"}}},
+	}
+
+	tags := NewTags().WithRecommendedVersionForPromotion(exp, vi)
+	assert.Equal(t, "bar1", tags.M["foo"])
+}
+
+func TestWithVersionCanaryRecommendedForPromotion(t *testing.T) {
+	var data []byte
+	data, err := ioutil.ReadFile(filepath.Join("..", "testdata", "experiment1-canarywinner.yaml"))
+	assert.NoError(t, err)
+	exp := &v2alpha2.Experiment{}
+	err = yaml.Unmarshal(data, exp)
+	assert.NoError(t, err)
+
+	vi := []VersionInfo{
+		{Variables: []v2alpha2.NamedValue{{Name: "foo", Value: "bar1"}}},
+		{Variables: []v2alpha2.NamedValue{{Name: "foo", Value: "bar2"}}},
+	}
+
+	tags := NewTags().WithRecommendedVersionForPromotion(exp, vi)
+	assert.Equal(t, "bar2", tags.M["foo"])
 }
 
 func TestWithOutVersionRecommendedForPromotion(t *testing.T) {
@@ -87,7 +133,13 @@ func TestWithOutVersionRecommendedForPromotion(t *testing.T) {
 	exp := &v2alpha2.Experiment{}
 	err = yaml.Unmarshal(data, exp)
 	assert.NoError(t, err)
-	tags := NewTags().WithRecommendedVersionForPromotion(exp)
-	assert.NotContains(t, tags.M, "revision1")
-	// assert.Equal(t, "revision1", tags.M["revision"])
+
+	vi := []VersionInfo{
+		{Variables: []v2alpha2.NamedValue{{Name: "foo", Value: "bar1"}}},
+		{Variables: []v2alpha2.NamedValue{{Name: "foo", Value: "bar2"}}},
+	}
+
+	tags := NewTags().WithRecommendedVersionForPromotion(exp, vi)
+	assert.NotContains(t, tags.M, "foo")
+	// assert.Equal(t, "bar1", tags.M["foo"])
 }

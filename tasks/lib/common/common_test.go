@@ -1,9 +1,12 @@
 package common
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/iter8-tools/etc3/api/v2alpha2"
@@ -98,8 +101,16 @@ func TestBashRun(t *testing.T) {
 	action, err := MakeTask(&actionSpec[0])
 	assert.NoError(t, err)
 	ctx := context.WithValue(context.Background(), tasks.ContextKey("experiment"), exp)
+
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	defer func() {
+		log.SetOutput(os.Stderr)
+	}()
+
 	err = action.Run(ctx)
 	assert.NoError(t, err)
+	assert.True(t, strings.Contains(buf.String(), "\necho \"v1\"\n"))
 }
 
 func TestMakePromoteKubectlTask(t *testing.T) {

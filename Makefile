@@ -15,6 +15,9 @@ test:
 coverage:
 	@echo "test coverage: $(shell go tool cover -func coverage.out | grep total | awk '{print substr($$3, 1, length($$3)-1)}')"
 
+show-coverage:
+	go tool cover -html=coverage.out
+
 docker-build:
 	docker build . -t ${IMG}
 
