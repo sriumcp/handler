@@ -23,8 +23,6 @@ const version string = "v0.1.0-pre"
 
 // package variables used for holding flag values
 var action string
-var task int
-var filePath string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -66,10 +64,8 @@ func initConfig() {
 		viper.SetConfigName(".handler")
 	}
 
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		// fmt.Println("Using config file:", viper.ConfigFileUsed())
-	}
+	// Read in any config file
+	viper.ReadInConfig()
 
 	viper.AutomaticEnv() // read in environment variables that match
 

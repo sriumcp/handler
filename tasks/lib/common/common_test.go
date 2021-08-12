@@ -37,7 +37,7 @@ func TestMakeTask(t *testing.T) {
 	assert.Equal(t, "earth", task.(*ExecTask).With.Args[3])
 	log.Trace(task.(*ExecTask).With.Args)
 
-	exp, err := (&tasks.Builder{}).FromFile(tasks.CompletePath("../../", "testdata/experiment10.yaml")).Build()
+	exp, _ := (&tasks.Builder{}).FromFile(tasks.CompletePath("../../", "testdata/experiment10.yaml")).Build()
 	task.Run(context.WithValue(context.Background(), tasks.ContextKey("experiment"), exp))
 
 	task, err = MakeTask(&v2alpha2.TaskSpec{
@@ -75,7 +75,7 @@ func TestExecTaskNoInterpolation(t *testing.T) {
 	assert.Equal(t, "world", task.(*ExecTask).With.Args[2])
 	log.Trace(task.(*ExecTask).With.Args)
 
-	exp, err := (&tasks.Builder{}).FromFile(tasks.CompletePath("../../", "testdata/experiment10.yaml")).Build()
+	exp, _ := (&tasks.Builder{}).FromFile(tasks.CompletePath("../../", "testdata/experiment10.yaml")).Build()
 	task.Run(context.WithValue(context.Background(), tasks.ContextKey("experiment"), exp))
 }
 

@@ -34,7 +34,7 @@ func (tm TaskMeta) GetCondition() *string {
 
 // VersionInfo contains header and url information needed to send requests to each version.
 type VersionInfo struct {
-	Variables []v2alpha2.NamedValue `json:"variables,omitemtpy" yaml:"variables,omitempty"`
+	Variables []v2alpha2.NamedValue `json:"variables,omitempty" yaml:"variables,omitempty"`
 }
 
 // Run the given action.

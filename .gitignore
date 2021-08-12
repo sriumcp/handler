@@ -7,6 +7,9 @@
 
 handler
 
+# downloaded binaries to under bin/
+bin/
+
 # Test binary, built with `go test -c`
 *.test
 

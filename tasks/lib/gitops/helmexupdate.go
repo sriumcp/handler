@@ -273,9 +273,7 @@ func (t *HelmexUpdateTask) updateValuesFile(exp *tasks.Experiment) error {
 // ToDo: implement request-pr
 func (t *HelmexUpdateTask) updateInGit() error {
 	script := fmt.Sprintf("cd " + LocalDir + ";" +
-		" git config user.email 'iter8@iter8.tools';" +
-		" git config user.name '" + t.With.Username + "';" +
-		" git commit -a -m 'update values file' --allow-empty;" +
+		" git commit -c 'user.name=Iter8' -c 'user.email=iter8@iter8.tools' -a -m 'update values file' --allow-empty;" +
 		" git push -f origin " + *t.With.Branch + ";")
 
 	cmd := exec.Command("/bin/bash", "-c", script)

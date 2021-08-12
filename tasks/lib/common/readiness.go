@@ -110,7 +110,7 @@ func MakeReadinessTask(t *v2alpha2.TaskSpec) (tasks.Task, error) {
 	// validate
 	for _, o := range task.With.ObjRefs {
 		if !IsDNSLabel(o.Name) {
-			err = errors.New("Object name is malformatted; needs to be a valid DNS label")
+			err = errors.New("object name is malformatted; needs to be a valid DNS label")
 			break
 		}
 	}

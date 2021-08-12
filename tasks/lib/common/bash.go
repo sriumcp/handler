@@ -70,7 +70,7 @@ func (t *BashTask) Run(ctx context.Context) error {
 		WithRecommendedVersionForPromotion(&exp.Experiment, t.With.VersionInfo)
 
 	// interpolate - replaces placeholders in the script with values
-	script, err := tags.Interpolate(&t.With.Script)
+	script, _ := tags.Interpolate(&t.With.Script)
 
 	log.Trace(script)
 	args := []string{"-c", script}
