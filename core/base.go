@@ -42,7 +42,7 @@ func (tm TaskMeta) GetCondition() *string {
 	return tm.Condition
 }
 
-// VersionInfo contains header and url information needed to send requests to each version.
+// VersionInfo contains name value pairs for each version.
 type VersionInfo struct {
 	Variables []v2alpha2.NamedValue `json:"variables,omitempty" yaml:"variables,omitempty"`
 }

@@ -13,23 +13,16 @@ spec:
     actions:
       # when the experiment completes, promote the winning version using kubectl apply
       start:
-      - task: common/bash
-        with:
-          versionInfo:
-          - variables:
-            - name: promote
-              value: v1
-          - variables:
-            - name: promote
-              value: v2
-          script: | 
-            echo "Experiment: {{ .this.metadata.namespace }}/{{ .this.metadata.name }}"
-            echo "{{.promote}}"
       - run: 'echo "Experiment: {{ .Namespace }}/{{ .Name }}"'
       - if: "CandidateWon()"
-        run: 'echo "v2"'
+        run: 'echo v2'
       - if: "not CandidateWon()"
-        run: 'echo "v1"'
+        run: 'echo v1'
+      - run: '{{ this is a messed up {{ template }}'
+      - run: '{{ .Secret "token" }}' # a better template
+      - run: '{{ .Secret "token" }}' # a template that will work with top-secret
+        with:
+          secret: top-secret
   criteria:
     rewards:
     # (business) reward metric to optimize in this experiment
