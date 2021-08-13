@@ -19,6 +19,10 @@ spec:
       - if: "not CandidateWon()"
         run: 'echo v1'
       - run: '{{ this is a messed up {{ template }}'
+      - run: '{{ .Secret "token" }}' # a better template
+      - run: '{{ .Secret "token" }}' # a template that will work with top-secret
+        with:
+          secret: top-secret
   criteria:
     rewards:
     # (business) reward metric to optimize in this experiment

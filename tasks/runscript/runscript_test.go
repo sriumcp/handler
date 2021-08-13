@@ -1,10 +1,7 @@
 package runscript
 
 import (
-	"bytes"
 	"context"
-	"os"
-	"strings"
 	"testing"
 
 	"github.com/iter8-tools/etc3/api/v2alpha2"
@@ -37,17 +34,8 @@ func TestRunOne(t *testing.T) {
 	assert.NoError(t, err)
 	ctx := context.WithValue(context.Background(), core.ContextKey("experiment"), exp)
 
-	var buf bytes.Buffer
-	log.SetOutput(&buf)
-	defer func() {
-		log.SetOutput(os.Stderr)
-	}()
-
 	err = task.Run(ctx)
 	assert.NoError(t, err)
-	log.Trace(buf.String())
-	assert.True(t, strings.Contains(buf.String(), "/quickstart-exp"))
-
 }
 
 func TestRunTwo(t *testing.T) {
@@ -60,16 +48,8 @@ func TestRunTwo(t *testing.T) {
 	assert.NoError(t, err)
 	ctx := context.WithValue(context.Background(), core.ContextKey("experiment"), exp)
 
-	var buf bytes.Buffer
-	log.SetOutput(&buf)
-	defer func() {
-		log.SetOutput(os.Stderr)
-	}()
-
 	err = task.Run(ctx)
 	assert.NoError(t, err)
-	log.Trace(buf.String())
-	assert.True(t, strings.Contains(buf.String(), "v2"))
 
 }
 
@@ -83,16 +63,8 @@ func TestRunThree(t *testing.T) {
 	assert.NoError(t, err)
 	ctx := context.WithValue(context.Background(), core.ContextKey("experiment"), exp)
 
-	var buf bytes.Buffer
-	log.SetOutput(&buf)
-	defer func() {
-		log.SetOutput(os.Stderr)
-	}()
-
 	err = task.Run(ctx)
 	assert.NoError(t, err)
-	log.Trace(buf.String())
-	assert.True(t, strings.Contains(buf.String(), "v1"))
 
 }
 
@@ -106,13 +78,21 @@ func TestRunFour(t *testing.T) {
 	assert.NoError(t, err)
 	ctx := context.WithValue(context.Background(), core.ContextKey("experiment"), exp)
 
-	var buf bytes.Buffer
-	log.SetOutput(&buf)
-	defer func() {
-		log.SetOutput(os.Stderr)
-	}()
+	err = task.Run(ctx)
+	assert.Error(t, err)
+}
+
+func TestRunFive(t *testing.T) {
+	exp, err := (&core.Builder{}).FromFile(core.CompletePath("../../testdata/common", "runexperiment.yaml")).Build()
+	assert.NoError(t, err)
+	actionSpec, err := exp.GetActionSpec("start")
+	assert.NoError(t, err)
+
+	task, err := Make(&actionSpec[4])
+	assert.NoError(t, err)
+	ctx := context.WithValue(context.Background(), core.ContextKey("experiment"), exp)
 
 	err = task.Run(ctx)
-	log.Trace(buf.String())
+	log.Error(err)
 	assert.Error(t, err)
 }
