@@ -25,10 +25,9 @@ func TestMakeRun(t *testing.T) {
 	})
 	assert.NotEmpty(t, task)
 	assert.NoError(t, err)
-	assert.Equal(t, "echo hello", task.(*Task).With.interpolatedRun)
 }
 
-func TestRun(t *testing.T) {
+func TestRunOne(t *testing.T) {
 	exp, err := (&core.Builder{}).FromFile(core.CompletePath("../../testdata/common", "runexperiment.yaml")).Build()
 	assert.NoError(t, err)
 	actionSpec, err := exp.GetActionSpec("start")
@@ -46,12 +45,22 @@ func TestRun(t *testing.T) {
 
 	err = task.Run(ctx)
 	assert.NoError(t, err)
-	log.Info(buf.String())
+	log.Trace(buf.String())
 	assert.True(t, strings.Contains(buf.String(), "/quickstart-exp"))
 
-	task, err = Make(&actionSpec[1])
+}
+
+func TestRunTwo(t *testing.T) {
+	exp, err := (&core.Builder{}).FromFile(core.CompletePath("../../testdata/common", "runexperiment.yaml")).Build()
+	assert.NoError(t, err)
+	actionSpec, err := exp.GetActionSpec("start")
 	assert.NoError(t, err)
 
+	task, err := Make(&actionSpec[1])
+	assert.NoError(t, err)
+	ctx := context.WithValue(context.Background(), core.ContextKey("experiment"), exp)
+
+	var buf bytes.Buffer
 	log.SetOutput(&buf)
 	defer func() {
 		log.SetOutput(os.Stderr)
@@ -59,12 +68,22 @@ func TestRun(t *testing.T) {
 
 	err = task.Run(ctx)
 	assert.NoError(t, err)
-	log.Info(buf.String())
+	log.Trace(buf.String())
 	assert.True(t, strings.Contains(buf.String(), "v2"))
 
-	task, err = Make(&actionSpec[2])
+}
+
+func TestRunThree(t *testing.T) {
+	exp, err := (&core.Builder{}).FromFile(core.CompletePath("../../testdata/common", "runexperiment.yaml")).Build()
+	assert.NoError(t, err)
+	actionSpec, err := exp.GetActionSpec("start")
 	assert.NoError(t, err)
 
+	task, err := Make(&actionSpec[2])
+	assert.NoError(t, err)
+	ctx := context.WithValue(context.Background(), core.ContextKey("experiment"), exp)
+
+	var buf bytes.Buffer
 	log.SetOutput(&buf)
 	defer func() {
 		log.SetOutput(os.Stderr)
@@ -72,6 +91,28 @@ func TestRun(t *testing.T) {
 
 	err = task.Run(ctx)
 	assert.NoError(t, err)
-	log.Info(buf.String())
+	log.Trace(buf.String())
 	assert.True(t, strings.Contains(buf.String(), "v1"))
+
+}
+
+func TestRunFour(t *testing.T) {
+	exp, err := (&core.Builder{}).FromFile(core.CompletePath("../../testdata/common", "runexperiment.yaml")).Build()
+	assert.NoError(t, err)
+	actionSpec, err := exp.GetActionSpec("start")
+	assert.NoError(t, err)
+
+	task, err := Make(&actionSpec[3])
+	assert.NoError(t, err)
+	ctx := context.WithValue(context.Background(), core.ContextKey("experiment"), exp)
+
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	defer func() {
+		log.SetOutput(os.Stderr)
+	}()
+
+	err = task.Run(ctx)
+	log.Trace(buf.String())
+	assert.Error(t, err)
 }
