@@ -1,0 +1,15 @@
+# git stuff
+.git
+.github
+.gitignore
+# docker stuff
+Dockerfile
+.dockerignore
+# handler files and folders not needed for build
+bin
+testdata
+*.md
+cover*
+handler
+LICENSE
+Makefile
