@@ -4,17 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/iter8-tools/handler/tasks"
 	"github.com/stretchr/testify/assert"
 )
-
-func init() {
-	log = tasks.GetLogger()
-}
-
-func TestVersion(t *testing.T) {
-	versionCmd.Run(nil, nil)
-}
 
 func TestInitConfig(t *testing.T) {
 	initConfig()
