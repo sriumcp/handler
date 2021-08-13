@@ -3,9 +3,10 @@ module github.com/iter8-tools/handler
 go 1.16
 
 require (
-	github.com/antonmedv/expr v1.8.9
+	github.com/antonmedv/expr v1.9.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/iter8-tools/etc3 v0.1.30
+	github.com/google/uuid v1.2.0 // indirect
+	github.com/iter8-tools/etc3 v0.1.31
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.15.0
@@ -18,5 +19,5 @@ require (
 	k8s.io/apiextensions-apiserver v0.22.0
 	k8s.io/apimachinery v0.22.0
 	k8s.io/client-go v0.22.0
-	sigs.k8s.io/controller-runtime v0.9.5
+	sigs.k8s.io/controller-runtime v0.9.6
 )

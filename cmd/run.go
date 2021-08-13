@@ -4,14 +4,17 @@ import (
 	"context"
 	"errors"
 	"os"
-	"strings"
 
 	"github.com/iter8-tools/etc3/api/v2alpha2"
-	"github.com/iter8-tools/handler/tasks"
-	"github.com/iter8-tools/handler/tasks/lib/common"
-	"github.com/iter8-tools/handler/tasks/lib/gitops"
-	"github.com/iter8-tools/handler/tasks/lib/metrics"
-	"github.com/iter8-tools/handler/tasks/lib/notification"
+	"github.com/iter8-tools/handler/core"
+	"github.com/iter8-tools/handler/tasks/bash"
+	"github.com/iter8-tools/handler/tasks/collect"
+	"github.com/iter8-tools/handler/tasks/exec"
+	"github.com/iter8-tools/handler/tasks/ghaction"
+	"github.com/iter8-tools/handler/tasks/http"
+	"github.com/iter8-tools/handler/tasks/readiness"
+	"github.com/iter8-tools/handler/tasks/runscript"
+	"github.com/iter8-tools/handler/tasks/slack"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/types"
@@ -32,35 +35,21 @@ func getExperimentNN() (*types.NamespacedName, error) {
 }
 
 // GetAction converts an action spec into an action.
-func GetAction(exp *tasks.Experiment, actionSpec v2alpha2.Action) (tasks.Action, error) {
-	action := make(tasks.Action, len(actionSpec))
+func GetAction(exp *core.Experiment, actionSpec v2alpha2.Action) (core.Action, error) {
+	action := make(core.Action, len(actionSpec))
 	var err error
-Loop:
 	for i := 0; i < len(actionSpec); i++ {
-		if actionSpecSubstr := strings.Split(actionSpec[i].Task, "/"); len(actionSpecSubstr) == 2 {
-			switch actionSpecSubstr[0] {
-			case common.LibraryName:
-				if action[i], err = common.MakeTask(&actionSpec[i]); err != nil {
-					break Loop
-				}
-			case notification.LibraryName:
-				if action[i], err = notification.MakeTask(&actionSpec[i]); err != nil {
-					// each task library corresponds to a case statement
-					break Loop
-				}
-			case metrics.LibraryName:
-				if action[i], err = metrics.MakeTask(&actionSpec[i]); err != nil {
-					break Loop
-				}
-			case gitops.LibraryName:
-				if action[i], err = gitops.MakeTask(&actionSpec[i]); err != nil {
-					break Loop
-				}
-			default:
-				err = errors.New("unknown library: " + actionSpecSubstr[0])
+		// if this is a run ... populate runspec
+		if core.IsARun(&actionSpec[i]) {
+			if action[i], err = runscript.Make(&actionSpec[i]); err != nil {
+				break
+			}
+		} else if core.IsATask(&actionSpec[i]) {
+			if action[i], err = MakeTask(&actionSpec[i]); err != nil {
+				break
 			}
 		} else {
-			err = errors.New("no library specified")
+			return nil, errors.New("action spec contains item that is neither run spec nor task spec")
 		}
 	}
 	return action, err
@@ -70,13 +59,13 @@ Loop:
 func run(cmd *cobra.Command, args []string) error {
 	nn, err := getExperimentNN()
 	if err == nil {
-		var exp *tasks.Experiment
-		if exp, err = (&tasks.Builder{}).FromCluster(nn).Build(); err == nil {
+		var exp *core.Experiment
+		if exp, err = (&core.Builder{}).FromCluster(nn).Build(); err == nil {
 			var actionSpec v2alpha2.Action
 			if actionSpec, err = exp.GetActionSpec(action); err == nil {
-				var action tasks.Action
+				var action core.Action
 				if action, err = GetAction(exp, actionSpec); err == nil {
-					ctx := context.WithValue(context.Background(), tasks.ContextKey("experiment"), exp)
+					ctx := context.WithValue(context.Background(), core.ContextKey("experiment"), exp)
 					log.Trace("created context for experiment")
 					err = action.Run(ctx)
 					if err == nil {
@@ -109,4 +98,29 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 	runCmd.PersistentFlags().StringVarP(&action, "action", "a", "", "name of the action")
 	runCmd.MarkPersistentFlagRequired("action")
+}
+
+// MakeTask constructs a Task from a TaskSpec or returns an error if any.
+func MakeTask(t *v2alpha2.TaskSpec) (core.Task, error) {
+	if t == nil || t.Task == nil || len(*t.Task) == 0 {
+		return nil, errors.New("nil or empty task found")
+	}
+	switch *t.Task {
+	case bash.TaskName:
+		return bash.Make(t)
+	case collect.TaskName:
+		return collect.Make(t)
+	case exec.TaskName:
+		return exec.Make(t)
+	case ghaction.TaskName:
+		return ghaction.Make(t)
+	case http.TaskName:
+		return http.Make(t)
+	case readiness.TaskName:
+		return readiness.Make(t)
+	case slack.TaskName:
+		return slack.Make(t)
+	default:
+		return nil, errors.New("unknown task: " + *t.Task)
+	}
 }

@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/iter8-tools/handler/tasks"
+	"github.com/iter8-tools/handler/core"
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
 
@@ -17,9 +16,6 @@ var cfgFile string
 
 // log
 var log *logrus.Logger
-
-// package constants
-const version string = "v0.1.0-pre"
 
 // package variables used for holding flag values
 var action string
@@ -43,7 +39,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", ".handler.yaml", "config file (default is .handler.yaml)")
-	log = tasks.GetLogger()
+	log = core.GetLogger()
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -71,6 +67,6 @@ func initConfig() {
 
 	ll, err := logrus.ParseLevel(viper.GetString("log_level"))
 	if err == nil {
-		tasks.SetLogLevel(ll)
+		core.SetLogLevel(ll)
 	}
 }
