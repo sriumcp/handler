@@ -49,6 +49,7 @@ func Make(t *v2alpha2.TaskSpec) (core.Task, error) {
 
 // Run the command.
 func (t *Task) Run(ctx context.Context) error {
+
 	cmd := exec.Command("/bin/bash", "-c", *t.TaskMeta.Run)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
