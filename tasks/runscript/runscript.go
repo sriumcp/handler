@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"os/exec"
 	"text/template"
 
@@ -119,8 +118,8 @@ func (t *Task) Run(ctx context.Context) error {
 	}
 
 	cmd := exec.Command("/bin/bash", "-c", t.With.interpolatedRun)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	out, err := cmd.CombinedOutput()
 	log.Trace("Running task: " + cmd.String())
-	return cmd.Run()
+	log.Trace("Got combined output: " + string(out))
+	return err
 }
