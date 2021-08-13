@@ -82,8 +82,8 @@ func TestBadActionRun(t *testing.T) {
 	action := Action{}
 	t1 := badTestTask{
 		TaskMeta: TaskMeta{
-			Task:      StringPointer("hello/world"),
-			Condition: StringPointer("WinnerFound()"),
+			Task: StringPointer("hello/world"),
+			If:   StringPointer("WinnerFound()"),
 		},
 	}
 	action = append(action, &t1)
@@ -102,7 +102,7 @@ func TestBadActionRun(t *testing.T) {
 	err = a.Run(ctx)
 	assert.Error(t, err)
 
-	t2.Condition = StringPointer("AnotherOneBytesTheDust()")
+	t2.If = StringPointer("AnotherOneBytesTheDust()")
 	err = a.Run(ctx)
 	assert.Error(t, err)
 }
