@@ -3,8 +3,9 @@ package runscript
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"os"
+	"os/exec"
 
 	"github.com/iter8-tools/etc3/api/v2alpha2"
 	"github.com/iter8-tools/handler/core"
@@ -48,6 +49,10 @@ func Make(t *v2alpha2.TaskSpec) (core.Task, error) {
 
 // Run the command.
 func (t *Task) Run(ctx context.Context) error {
-	log.Error("not implemented yet")
-	return errors.New("not implemented yet")
+	cmd := exec.Command("/bin/bash", "-c", *t.TaskMeta.Run)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	log.Info("Running task: " + cmd.String())
+	log.Trace(*t.TaskMeta.Run)
+	return cmd.Run()
 }
