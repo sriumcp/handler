@@ -34,7 +34,7 @@ var _ = BeforeSuite(func(done Done) {
 		return restConf, err
 	}
 	// Install CRDs into the cluster
-	crdPath := core.CompletePath("../", "testdata/crd/bases")
+	crdPath := core.CompletePath("../", "testdata/crd")
 	_, err = envtest.InstallCRDs(restConf, envtest.CRDInstallOptions{Paths: []string{crdPath}})
 	Expect(err).ToNot(HaveOccurred())
 

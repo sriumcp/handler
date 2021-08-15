@@ -14,7 +14,7 @@ func init() {
 // Task defines common method signatures for every task.
 type Task interface {
 	Run(ctx context.Context) error
-	GetCondition() *string
+	GetIf() *string
 }
 
 // IsARun determines if the given task spec is in fact a run spec.
@@ -32,14 +32,14 @@ type Action []Task
 
 // TaskMeta is common to all Tasks
 type TaskMeta struct {
-	Task      *string `json:"task,omitempty" yaml:"task,omitempty"`
-	Run       *string `json:"run,omitempty" yaml:"run,omitempty"`
-	Condition *string `json:"condition,omitempty" yaml:"condition,omitempty"`
+	Task *string `json:"task,omitempty" yaml:"task,omitempty"`
+	Run  *string `json:"run,omitempty" yaml:"run,omitempty"`
+	If   *string `json:"if,omitempty" yaml:"if,omitempty"`
 }
 
-// GetCondition returns condition from TaskMeta
-func (tm TaskMeta) GetCondition() *string {
-	return tm.Condition
+// GetIf returns any 'if' from TaskMeta
+func (tm TaskMeta) GetIf() *string {
+	return tm.If
 }
 
 // VersionInfo contains name value pairs for each version.
@@ -57,7 +57,7 @@ func (a *Action) Run(ctx context.Context) error {
 			return err
 		}
 		// if task has a condition
-		if cond := (*a)[i].GetCondition(); cond != nil {
+		if cond := (*a)[i].GetIf(); cond != nil {
 			// condition evaluates to false ... then shouldRun is false
 			program, err := expr.Compile(*cond, expr.Env(exp), expr.AsBool())
 			if err != nil {
