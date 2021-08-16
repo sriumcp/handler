@@ -15,6 +15,9 @@ import (
 // Experiment is an enhancement of v2alpha2.Experiment struct with useful methods.
 type Experiment struct {
 	v2alpha2.Experiment
+	// was this experiment built from cluster or locally using a manifest
+	local    bool
+	filePath string
 }
 
 // Builder helps in construction of an experiment.

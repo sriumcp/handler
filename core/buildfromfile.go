@@ -14,7 +14,10 @@ func (b *Builder) FromFile(filePath string) *Builder {
 	var data []byte
 	data, err = ioutil.ReadFile(filePath)
 	if err == nil {
-		exp := &Experiment{}
+		exp := &Experiment{
+			local:    true,
+			filePath: filePath,
+		}
 		err = yaml.Unmarshal(data, exp)
 		if err == nil {
 			actions, _ := json.MarshalIndent(exp.Spec.Strategy.Actions, "", "  ")

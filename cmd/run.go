@@ -60,6 +60,10 @@ func run(cmd *cobra.Command, args []string) error {
 	nn, err := getExperimentNN()
 	if err == nil {
 		var exp *core.Experiment
+		// if localExperiment is an empty string
+		// get experiment from cluster ...
+		// else if localExperiment is a non-empty string (should be a valid path to an experimnent file)
+		// get experiment from local file
 		if exp, err = (&core.Builder{}).FromCluster(nn).Build(); err == nil {
 			var actionSpec v2alpha2.Action
 			if actionSpec, err = exp.GetActionSpec(action); err == nil {
@@ -85,7 +89,7 @@ func run(cmd *cobra.Command, args []string) error {
 var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "run an action",
-	Long:  `Sequentially execute all tasks in the specified action; if any task run results in an error, exit immediately with error.`,
+	Long:  `Sequentially execute all tasks in the specified action; if any task run results in an error, exit immediately with error. Run can optionally use a local experiment manifest. Only a subset of tasks (including metrics collection) are supported for local experiments.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := run(cmd, args); err != nil {
 			log.Error("Exiting with error: ", err)
@@ -97,6 +101,7 @@ var runCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(runCmd)
 	runCmd.PersistentFlags().StringVarP(&action, "action", "a", "", "name of the action")
+	runCmd.PersistentFlags().StringVarP(&localExperiment, "experiment", "e", "", "full path to the local experiment manifest; optional")
 	runCmd.MarkPersistentFlagRequired("action")
 }
 

@@ -19,6 +19,7 @@ var log *logrus.Logger
 
 // package variables used for holding flag values
 var action string
+var localExperiment string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
