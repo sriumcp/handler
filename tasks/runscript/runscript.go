@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"text/template"
 
@@ -20,6 +21,10 @@ var log *logrus.Logger
 func init() {
 	log = core.GetLogger()
 }
+
+const (
+	ScratchEnv string = "SCRATCH_DIR=/scratch"
+)
 
 // Inputs for the run task may contain a secret reference
 type Inputs struct {
@@ -109,15 +114,26 @@ func (t *Task) Interpolate(ctx context.Context) error {
 	return errors.New("cannot interpolate string due to template creation error")
 }
 
-// Run the command.
-func (t *Task) Run(ctx context.Context) error {
+// get the command
+func (t *Task) getCommand(ctx context.Context) (*exec.Cmd, error) {
 	err := t.Interpolate(ctx)
 	if err != nil {
 		log.Error(err)
-		return err
+		return nil, err
 	}
 
 	cmd := exec.Command("/bin/bash", "-c", t.With.interpolatedRun)
+	// append the scratch environment variable
+	cmd.Env = append(os.Environ(), ScratchEnv)
+	return cmd, nil
+}
+
+// Run the command.
+func (t *Task) Run(ctx context.Context) error {
+	cmd, err := t.getCommand(ctx)
+	if err != nil {
+		return err
+	}
 	out, err := cmd.CombinedOutput()
 	log.Trace("Running task: " + cmd.String())
 	log.Trace("Got combined output: " + string(out))
