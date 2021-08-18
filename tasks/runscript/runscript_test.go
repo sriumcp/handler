@@ -96,3 +96,23 @@ func TestRunFive(t *testing.T) {
 	log.Error(err)
 	assert.Error(t, err)
 }
+
+func TestRunEnv(t *testing.T) {
+
+	exp, err := (&core.Builder{}).FromFile(core.CompletePath("../../testdata/common", "runexperiment.yaml")).Build()
+	assert.NoError(t, err)
+
+	task, err := Make(&v2alpha2.TaskSpec{
+		Run: core.StringPointer("echo $SCRATCH_DIR"),
+	})
+	assert.NoError(t, err)
+	ctx := context.WithValue(context.Background(), core.ContextKey("experiment"), exp)
+
+	cmd, err := task.(*Task).getCommand(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, "/bin/bash -c echo $SCRATCH_DIR", cmd.String())
+
+	out, err := cmd.CombinedOutput()
+	assert.Equal(t, "/scratch\n", string(out))
+	assert.NoError(t, err)
+}
