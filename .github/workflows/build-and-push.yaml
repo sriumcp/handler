@@ -25,16 +25,21 @@ jobs:
         kubectl: 1.18.2
         kustomize: 3.5.5
         helmv3: 3.2.1
-    - name: Set up Kubebuilder 2.3.1
+    - name: Set up Kubebuilder 3.1.0
       run: |
-        os=$(go env GOOS)
-        arch=$(go env GOARCH)
-
-        # download kubebuilder and extract it to tmp
-        curl -L https://go.kubebuilder.io/dl/2.3.1/${os}/${arch} | tar -xz -C /tmp/
-
-        sudo mv /tmp/kubebuilder_2.3.1_${os}_${arch} /usr/local/kubebuilder
+        curl -L -o kubebuilder https://github.com/kubernetes-sigs/kubebuilder/releases/download/v3.1.0/kubebuilder_$(go env GOOS)_$(go env GOARCH)
+        chmod +x kubebuilder && mv kubebuilder /usr/local/bin/
         export PATH=$PATH:/usr/local/kubebuilder/bin
+    # - name: Set up Kubebuilder 2.3.1
+    #   run: |
+    #     os=$(go env GOOS)
+    #     arch=$(go env GOARCH)
+
+    #     # download kubebuilder and extract it to tmp
+    #     curl -L https://go.kubebuilder.io/dl/2.3.1/${os}/${arch} | tar -xz -C /tmp/
+
+    #     sudo mv /tmp/kubebuilder_2.3.1_${os}_${arch} /usr/local/kubebuilder
+    #     export PATH=$PATH:/usr/local/kubebuilder/bin
     - name: Set up linter
       run: go get honnef.co/go/tools/cmd/staticcheck@latest
     - name: Check out code into the Go module directory
@@ -74,7 +79,7 @@ jobs:
         kubectl: 1.18.2
         kustomize: 3.5.5
         helm: 2.16.7
-        helmv3: 3.2.1
+        helmv3: 3.4.1
     - name: Set up Kubebuilder 2.3.1
       run: |
         os=$(go env GOOS)
